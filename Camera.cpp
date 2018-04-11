@@ -11,7 +11,7 @@ void Camera::test() {
         std::cout << "<q> quit" << std::endl;
 
         cv::Mat img;
-        int key = 0;
+        char key = 0;
         while (input.read(img) && key != 'q') {
             std::cout << ocr.recognize(proc.process(img)) << std::endl;
             key = cv::waitKey(delay);
@@ -24,7 +24,7 @@ void Camera::learn() {
     std::cout << "<u>, <h>, <s> to answer digit, <space> ignore, <q> quit" << std::endl;
 
     cv::Mat img;
-    int key = 0;
+    char key = 0;
     while (input.read(img) && !(key == 'q' || key == 'f')) {
         key = ocr.learn(proc.process(img));
     }
@@ -41,7 +41,7 @@ void Camera::adjust() {
     std::cout << "<q> quit" << std::endl;
 
     cv::Mat img;
-    int key = 0;
+    char key = 0;
     while (input.read(img) && key != 'q') {
         proc.process(img);
         key = cv::waitKey(delay);
