@@ -15,7 +15,7 @@ try:
     model = keras.models.model_from_json(model_file.read())
     model.set_weights(load(weights_file))
     #was sparse_categorical_crossentropy
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     model_file.close()
     weights_file.close()
