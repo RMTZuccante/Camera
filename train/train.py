@@ -206,7 +206,7 @@ with graph.as_default():
                 try:
                     model = models.model_from_json(model_file.read())
                     model.set_weights(load(weights_file))
-                    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+                    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
                     print('Model loaded')
                 except Exception as e:
                     print(str(e))
@@ -225,7 +225,7 @@ with graph.as_default():
             layers.Dense(3, activation='softmax')
         ])
 
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 logging.getLogger('werkzeug').setLevel(logging.CRITICAL)
 
