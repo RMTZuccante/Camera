@@ -2,16 +2,23 @@ import cv2
 
 from flask import Flask, Response, request, abort
 from stream import Stream
-from threading import Thread, Timer, current_thread
+from threading import Thread
 from queue import Queue
-from tensorflow import keras, nn, get_default_graph
+from keras import models, layers, Sequential
+from tensorflow import get_default_graph
 from numpy import array, expand_dims, amax, argmax
 from time import sleep
 from os import path, makedirs, _exit
 from pickle import dump, load
-from camera import Camera
 import logging
-from sys import stderr
+import sys
+
+p = path.dirname(__file__)
+if len(p) is 0:
+    p = '.'
+sys.path.append(p + '/../')
+
+from camera import Camera
 
 app = Flask(__name__)
 
@@ -21,22 +28,21 @@ def limit_connections():
     global client_IP
 
     if client_IP is None:
-        print('Connection accepted')
-        client_IP = request.remote_addr  # If the incoming connection is the first, save its IP address
-
+        if request.path is '/':
+            print('Connection accepted')
+            client_IP = request.remote_addr  # If the incoming connection is the first, save its IP address
+        else:
+            abort(403)
     elif request.path is '/' or request.remote_addr != client_IP:  # Limit requests to one single video stream and one single ip address
         abort(403)  # If a new video streaming is
-
 
 @app.route('/')
 # Start the video stream and other services
 def start():
     mainthread.start()  # Start the main thread
 
-    # timer.start()
-
     def readStream():
-        # While the thread is alive send images to the web client
+        # Send images to the web client
         while True:
             img = stream.get()
             if img is None:
@@ -69,7 +75,7 @@ def main():
                 stream.add(Camera.read())
             except Camera.CameraError as e:
                 stream.addMex(str(e), (0, 0, 255))
-                stderr.write(str(e))
+                sys.stderr.write(str(e) + '\n')
                 sleep(2)
                 stop(-1)
 
@@ -126,7 +132,7 @@ def train():
 
 def test():
     with graph.as_default():
-        while keys.empty() or keys.get() != 'q':
+        while (keys.empty() or keys.get() != 'q'):
             frame = Camera.read()
             conts, grey = Camera.Utils.findShapes(frame, (500, 6000))
             for c in conts:
@@ -142,7 +148,6 @@ def test():
 
 
 def save():
-    p = path.dirname(__file__)
     global model
     try:
         if not path.exists(p + '/../model/'):
@@ -167,9 +172,6 @@ def save():
 
 
 def stop(code):
-    if current_thread() is not mainthread:
-        for i in range(2): keys.put('q')
-
     Camera.close()
     stream.addMex('Program exited', (0, 255, 0))
     sleep(.5)
@@ -179,12 +181,11 @@ def stop(code):
 try:
     Camera.loadCameras()
 except Camera.CameraError as e:
-    stderr.write(str(e))
+    sys.stderr.write(str(e) + '\n')
     exit(-1)
 
-ref = ['h', 's', 'u']
 graph = get_default_graph()
-
+ref = ['h', 's', 'u']
 stream = Stream()
 mainthread = Thread(target=main)
 
@@ -192,35 +193,39 @@ keys = Queue(maxsize=5)
 client_IP = None
 images = []
 labels = []
-alive = True
 
 model = None
 
 with graph.as_default():
-    p = path.dirname(__file__)
     if path.exists(p + '/../model/'):
-        model_file = open(p + '/../model/model.json', 'r')
-        weights_file = open(p + '/../model/weights.bin', 'rb')
+        try:
+            model_file = open(p + '/../model/model.json', 'r')
+            weights_file = open(p + '/../model/weights.bin', 'rb')
 
-        if input('Old model files found, would you like to load the old model? [y/n] ').lower() is 'y':
-            model = keras.models.model_from_json(model.read())
-            model.set_weights(load(weights_file))
-            model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-            print('Model loaded')
+            if input('Old model files found, would you like to load the old model? [y/n] ').lower() == 'y':
+                try:
+                    model = models.model_from_json(model_file.read())
+                    model.set_weights(load(weights_file))
+                    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+                    print('Model loaded')
+                except Exception as e:
+                    print(str(e))
+                    sys.stderr.write('Error loading module, creating a new one\n')
+                    model = None
 
-        model_file.close()
-        weights_file.close()
-        print('Model imported')
+            model_file.close()
+            weights_file.close()
+        except FileNotFoundError:
+            model = None
+
     if model is None:
-        model = keras.Sequential([
-            keras.layers.Flatten(input_shape=(80, 80)),
-            keras.layers.Dense(128, activation=nn.relu),
-            keras.layers.Dense(3, activation=nn.softmax)
+        model = Sequential([
+            layers.Flatten(input_shape=(80, 80)),
+            layers.Dense(128, activation='relu'),
+            layers.Dense(3, activation='softmax')
         ])
 
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-timer = Timer(7.0, lambda: stop(0))
 
 logging.getLogger('werkzeug').setLevel(logging.CRITICAL)
 

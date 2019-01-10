@@ -75,7 +75,7 @@ class Camera:
         # Find all shapes with an area between range values, if range = None, alla shapes are considered
         def findShapes(image, range=None):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert the image from RGB to greyscale
-            _, th = cv2.threshold(image, 50, 255,
+            _, th = cv2.threshold(image, 100, 255,
                                   cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
             _, contours, _ = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
 
