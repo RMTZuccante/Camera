@@ -4,8 +4,8 @@ from flask import Flask, Response, request, abort
 from stream import Stream
 from threading import Thread
 from queue import Queue
-from keras import models, layers, Sequential
 from tensorflow import get_default_graph
+from keras import models, layers, Sequential, utils
 from numpy import array, expand_dims, amax, argmax
 from time import sleep
 from os import path, makedirs, _exit
@@ -119,6 +119,7 @@ def keyInt(frame):
 
 def train():
     global images, labels, model
+    labels = utils.to_categorical(labels, num_classes=None)
     if len(labels) is 0:
         stream.addMex('No collected images', (0, 0, 255))
         sleep(3)
@@ -154,6 +155,7 @@ def save():
             makedirs(p + '/../model/')
 
         if model is not None:
+            model.save(p + '/../model/model.h5')
             model_file = open(p + '/../model/model.json', 'w')
             weights_file = open(p + '/../model/weights.bin', 'wb')
 

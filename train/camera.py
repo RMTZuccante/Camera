@@ -1,6 +1,5 @@
 from threading import RLock
 import cv2
-import subprocess
 
 
 class Camera:
@@ -54,36 +53,23 @@ class Camera:
     def unlock():
         Camera.__lock.release()
 
+
+# Utilities for working with images
+class Utils:
+
     @staticmethod
-    def setCameraLR(left, right):
-        l = r = None
-        ls = subprocess.check_output(['lsusb'])
-        dev = ls.splitlines()
-        for line in dev:
-            line = str(line)
-            if left in line:
-                l = int(line.split(maxsplit=4)[-2][:-1])
-            elif right in line:
-                r = int(line.split(maxsplit=4)[-2][:-1])
-        Camera._right = int(l < r)
-        Camera._left = int(not Camera._right)
+    # Find all shapes with an area between range values, if range = None, alla shapes are considered
+    def findShapes(image, range=None):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert the image from RGB to greyscale
+        _, th = cv2.threshold(image, 100, 255,
+                              cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
+        _, contours, _ = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
 
-    # Utilities for working with images
-    class Utils:
-
-        @staticmethod
-        # Find all shapes with an area between range values, if range = None, alla shapes are considered
-        def findShapes(image, range=None):
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert the image from RGB to greyscale
-            _, th = cv2.threshold(image, 100, 255,
-                                  cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
-            _, contours, _ = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
-
-            if range is not None:
-                conts = []
-                for c in contours:
-                    # If the shape area is between two values insert int in the array
-                    if range[0] <= cv2.contourArea(c) <= range[1]:
-                        conts.append(c)
-                contours = conts
-            return contours, image
+        if range is not None:
+            conts = []
+            for c in contours:
+                # If the shape area is between two values insert int in the array
+                if range[0] <= cv2.contourArea(c) <= range[1]:
+                    conts.append(c)
+            contours = conts
+        return contours, image
