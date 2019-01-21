@@ -12,13 +12,7 @@ from os import path, makedirs, _exit
 from pickle import dump, load
 import logging
 import sys
-
-p = path.dirname(__file__)
-if len(p) is 0:
-    p = '.'
-sys.path.append(p + '/../')
-
-from camera import Camera
+import camera
 
 app = Flask(__name__)
 
@@ -35,6 +29,7 @@ def limit_connections():
             abort(403)
     elif request.path is '/' or request.remote_addr != client_IP:  # Limit requests to one single video stream and one single ip address
         abort(403)  # If a new video streaming is
+
 
 @app.route('/')
 # Start the video stream and other services
@@ -71,9 +66,9 @@ def main():
             keyInt(frame)
         else:
             try:
-                frame = Camera.read()
-                stream.add(Camera.read())
-            except Camera.CameraError as e:
+                frame = camera.Camera.read()
+                stream.add(camera.Camera.read())
+            except camera.Camera.CameraError as e:
                 stream.addMex(str(e), (0, 0, 255))
                 sys.stderr.write(str(e) + '\n')
                 sleep(2)
@@ -89,7 +84,7 @@ def keyInt(frame):
 
     elif k is '':
         frame = frame.copy()
-        shapes, gray = Camera.Utils.findShapes(frame, (500, 6000))
+        shapes, gray = camera.Utils.findShapes(frame, (500, 6000))
         for c in shapes:
             img = frame.copy()
             cv2.drawContours(img, [c], -1, (0, 255, 0), 1)
@@ -134,8 +129,8 @@ def train():
 def test():
     with graph.as_default():
         while (keys.empty() or keys.get() != 'q'):
-            frame = Camera.read()
-            conts, grey = Camera.Utils.findShapes(frame, (500, 6000))
+            frame = camera.Camera.read()
+            conts, grey = camera.Utils.findShapes(frame, (500, 6000))
             for c in conts:
                 x, y, w, h = cv2.boundingRect(c)
                 img = grey[y: y + h, x:x + w]
@@ -174,15 +169,20 @@ def save():
 
 
 def stop(code):
-    Camera.close()
+    camera.Camera.close()
     stream.addMex('Program exited', (0, 255, 0))
     sleep(.5)
     _exit(code)
 
 
+p = path.dirname(__file__)
+if len(p) is 0:
+    p = '.'
+sys.path.append(p + '/../')
+
 try:
-    Camera.loadCameras()
-except Camera.CameraError as e:
+    camera.Camera.loadCameras()
+except camera.Camera.CameraError as e:
     sys.stderr.write(str(e) + '\n')
     exit(-1)
 
