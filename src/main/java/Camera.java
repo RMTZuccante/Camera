@@ -1,3 +1,4 @@
+import org.apache.commons.lang3.SystemUtils;
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
@@ -7,13 +8,22 @@ import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Camera {
+
+    private static boolean libLoaded = false;
+    private VideoCapture cap = new VideoCapture();
+
+    public Camera() {
+
+    }
+
     public static void main(String[] args) throws IOException {
-        System.load(ClassLoader.getSystemClassLoader().getResource("opencv_java401.dll").getFile());
+
 
         VideoCapture cam = new VideoCapture();
         cam.open(0);
@@ -43,7 +53,15 @@ public class Camera {
         }
     }
 
-    static INDArray getInputImage(Mat img, Rect rect) {
+    public boolean open(int i) {
+        return cap.open(i);
+    }
+
+    public boolean open(String fn) {
+        return cap.open(fn);
+    }
+
+    private INDArray getInputImage(Mat img, Rect rect) {
         img = new Mat(img, rect);
         Imgproc.cvtColor(img, img, Imgproc.COLOR_BGR2GRAY);
         Imgproc.resize(img, img, new Size(80, 80));
@@ -58,8 +76,7 @@ public class Camera {
         }
     }
 
-
-    static ArrayList<MatOfPoint> findShapes(Mat img, int min, int max) {
+    private ArrayList<MatOfPoint> findShapes(Mat img, int min, int max) {
         Mat gray = new Mat();
         Mat thresh = new Mat();
         Imgproc.cvtColor(img, gray, Imgproc.COLOR_BGR2GRAY);
@@ -75,5 +92,43 @@ public class Camera {
             }
             return inRange;
         }
+    }
+
+
+    public void loadLib(String path) {
+        if (path == null || path.length() == 0) {
+            System.out.println("[INFO]: No lib path specified, searching in this directory");
+            path = ".";
+        }
+        File dir = new File(path);
+        if (!dir.isDirectory() || !dir.exists()) {
+            System.err.println("The provided lib path is invalid");
+            System.exit(-1);
+        }
+        path = null;
+        File[] files = dir.listFiles();
+        if (SystemUtils.IS_OS_WINDOWS) {
+            for (File f : files) {
+                if (f.getName().matches("\\S*(opencv_java)\\d*(.dll)")) {
+                    path = f.getAbsolutePath();
+                    break;
+                }
+            }
+        } else if (SystemUtils.IS_OS_LINUX) {
+            for (File f : files) {
+                if (f.getName().matches("\\S*(opencv_java)\\d*(.so)")) {
+                    path = f.getAbsolutePath();
+                    break;
+                }
+            }
+        } else {
+            System.err.println("OS not compatible yet");
+            System.exit(-1);
+        }
+        if (path == null) {
+            System.err.println("Cannot find native library in specified path");
+            System.exit(-1);
+        }
+        System.load(path);
     }
 }
