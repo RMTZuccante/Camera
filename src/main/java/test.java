@@ -53,7 +53,7 @@ public class test {
     }
 
     public static void main(String[] args) throws IOException {
-        if (!loadLib("D:\\Cartelle\\Projects\\Robotica\\OpenCV")) System.exit(-1);
+        if (!loadLib("C:\\opencv\\build\\java\\x64")) System.exit(-1);
         VideoCapture cam = new VideoCapture();
         cam.open(0);
         Scanner tas = new Scanner(System.in);
@@ -78,13 +78,14 @@ public class test {
                 Rect bound = Imgproc.boundingRect(c);
                 INDArray arr = getInputImage(copy, bound);
                 INDArray predict = model.output(arr);
-                if (predict.amax().getDouble(0) > 0.999) {
+                if (predict.amax().getDouble(0) > 0.9999) {
                     Imgproc.rectangle(img, new Point(bound.x, bound.y), new Point(bound.x + bound.width, bound.y + bound.height), new Scalar(0, 255, 0), 2);
-                    Imgproc.putText(img, ref[predict.argMax().getInt(0)] + "", new Point(bound.x + bound.width + 10, bound.y + bound.height), 0, 1, new Scalar(0, 0, 255));
+                    Imgproc.putText(img, ref[predict.argMax().getInt(0)] + " " + predict.amax().getDouble(0) * 100 + "%", new Point(bound.x + bound.width + 10, bound.y + bound.height), 0, 1, new Scalar(0, 0, 255));
                 }
             }
             imshow.showImage(img);
         }
+        System.out.println("Exit");
     }
 
     static INDArray getInputImage(Mat img, Rect rect) {
