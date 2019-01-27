@@ -14,9 +14,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Frame extends Mat {
+    private Camera cam;
 
+    protected Frame(Camera c) {
+        cam = c;
+    }
 
-    public char predict(MultiLayerNetwork model) {
+    public char predict() {
         Mat copy = this.clone();
         ArrayList<MatOfPoint> conts = findShapes(500, 6000);
         char pred = 0;
@@ -25,7 +29,7 @@ public class Frame extends Mat {
             MatOfPoint c = conts.get(i);
             Rect bound = Imgproc.boundingRect(c);
             INDArray arr = getInputImage(copy, bound);
-            INDArray predict = model.output(arr);
+            INDArray predict = cam.model.output(arr);
             if (predict.amax().getDouble(0) > 0.9999 && predict.amax().getDouble(0) > prob) {
                 prob = predict.amax().getDouble(0);
                 pred = Camera.ref[predict.argMax().getInt(0)];

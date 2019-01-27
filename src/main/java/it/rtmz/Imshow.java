@@ -1,3 +1,5 @@
+package it.rtmz;
+
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -6,11 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-
-//import java.io.ByteArrayInputStream;
-//import java.io.InputStream;
-//import javax.imageio.ImageIO;
-//import javax.swing.plaf.ButtonUI;
 
 public class Imshow {
 

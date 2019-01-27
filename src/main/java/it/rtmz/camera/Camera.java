@@ -1,6 +1,7 @@
 package it.rtmz.camera;
 
 import org.apache.commons.lang3.SystemUtils;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
@@ -10,7 +11,12 @@ public class Camera {
 
     static char[] ref = new char[]{'H', 'S', 'U'};
     private static boolean libLoaded = false;
+    MultiLayerNetwork model;
     private VideoCapture cap = new VideoCapture();
+
+    public Camera(MultiLayerNetwork model) {
+        this.model = model;
+    }
 
     static public boolean loadLib(String path) {
         if (libLoaded) return true;
@@ -76,7 +82,7 @@ public class Camera {
             System.err.println("[ERR]: Trying reading camera without opening it");
             return null;
         }
-        Frame f = new Frame();
+        Frame f = new Frame(this);
         if (!cap.read(f)) throw new IOException("Camera may be disconnected");
         return f;
     }
