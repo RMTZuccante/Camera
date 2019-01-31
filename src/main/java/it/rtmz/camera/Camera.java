@@ -11,6 +11,7 @@ public class Camera {
 
     static char[] ref = new char[]{'H', 'S', 'U'};
     private static boolean libLoaded = false;
+    private Frame frame = new Frame(this);
     MultiLayerNetwork model;
     private VideoCapture cap = new VideoCapture();
 
@@ -58,6 +59,10 @@ public class Camera {
         return true;
     }
 
+    public Frame getFrame() {
+        return frame;
+    }
+
     public boolean open(int i) {
         if (!libLoaded) {
             System.err.println("[ERR]: Trying opening camera without loading library");
@@ -82,8 +87,7 @@ public class Camera {
             System.err.println("[ERR]: Trying reading camera without opening it");
             return null;
         }
-        Frame f = new Frame(this);
-        if (!cap.read(f)) throw new IOException("Camera may be disconnected");
-        return f;
+        if (!cap.read(frame)) throw new IOException("Camera may be disconnected");
+        return frame;
     }
 }

@@ -1,9 +1,12 @@
 package it.rtmz;
 
 import it.rtmz.camera.Camera;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.util.ModelSerializer;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
@@ -33,12 +36,15 @@ public class Preloader {
 
 
         String lp = null;
+        String modelpath = "model.dl4j";
         if (args != null && args.length > 0) {
             int i = 0;
             try {
                 for (i = 0; i < args.length; i++) {
                     if (args[i].equals("-lp")) {
                         lp = args[++i];
+                    } else if (args[i].equals("-m")) {
+                        modelpath = args[++i];
                     }
                 }
             } catch (IndexOutOfBoundsException e) {
@@ -46,7 +52,17 @@ public class Preloader {
                 System.exit(-1);
             }
         }
+
         if (!Camera.loadLib(lp)) System.exit(-1);
+        File f = new File(modelpath);
+        MultiLayerNetwork model = null;
+        if (f.exists() && f.canRead()) {
+            try {
+                model = ModelSerializer.restoreMultiLayerNetwork(f.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         exec(args);
     }
 
