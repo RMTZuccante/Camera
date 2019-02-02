@@ -1,4 +1,3 @@
-import it.rtmz.Imshow;
 import org.apache.commons.lang3.SystemUtils;
 import org.datavec.image.loader.NativeImageLoader;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -6,6 +5,7 @@ import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.opencv.core.*;
+import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
@@ -70,7 +70,6 @@ public class test {
 
         char ref[] = new char[]{'S', 'H', 'U'};
         Mat img = new Mat();
-        Imshow imshow = new Imshow("Camera");
         while (cam.isOpened() && cam.read(img)) {
             Mat copy = img.clone();
             ArrayList<MatOfPoint> conts = findShapes(img, 500, 6000);
@@ -79,12 +78,13 @@ public class test {
                 Rect bound = Imgproc.boundingRect(c);
                 INDArray arr = getInputImage(copy, bound);
                 INDArray predict = model.output(arr);
-                if (predict.amax().getDouble(0) > 0.9999) {
+                if (predict.amax().getDouble(0) > 0.999) {
                     Imgproc.rectangle(img, new Point(bound.x, bound.y), new Point(bound.x + bound.width, bound.y + bound.height), new Scalar(0, 255, 0), 2);
                     Imgproc.putText(img, ref[predict.argMax().getInt(0)] + " " + predict.amax().getDouble(0) * 100 + "%", new Point(bound.x + bound.width + 10, bound.y + bound.height), 0, 1, new Scalar(0, 0, 255));
                 }
             }
-            imshow.showImage(img);
+            HighGui.imshow("Test", img);
+            HighGui.waitKey(1);
         }
         System.out.println("Exit");
     }

@@ -1,9 +1,10 @@
-package it.rtmz;
+package it.rtmz.utils;
 
 import it.rtmz.camera.Camera;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.opencv.core.Mat;
+import org.opencv.highgui.HighGui;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
@@ -67,10 +68,12 @@ public class Preloader {
     }
 
     public static void exec(String[] args) {
-        Imshow sh = new Imshow("ASd");
         VideoCapture c = new VideoCapture(0);
         if (!c.open(0)) System.out.println("niente");
         Mat m = new Mat();
-        while (c.isOpened() && c.read(m)) sh.showImage(m);
+        while (c.isOpened() && c.read(m)) {
+            HighGui.imshow("Camera", m);
+            HighGui.waitKey(1);
+        }
     }
 }
