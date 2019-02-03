@@ -31,7 +31,12 @@ else
     path="."
   fi
     echo Using path: "${path}"
+    echo
     echo Removing "${path}/Camera/"
-    rm -r -I "${path}/Camera/"
-    git clone https://github.com/RMTZuccante/Camera
+    echo
+    rm -rf -I "${path}/Camera/"
+    echo
+    echo Cloning repository into "${path}/Camera"
+    git clone -q https://github.com/RMTZuccante/Camera "${path}/Camera"
+    chmod +x "${path}/Camera/update.sh"
 fi
