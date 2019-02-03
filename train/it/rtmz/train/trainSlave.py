@@ -2,7 +2,7 @@ import base64
 import cv2
 import zmq
 
-if __name__ == "__main":
+if __name__ == "__main__":
     context = zmq.Context()
     footage_socket = context.socket(zmq.PUB)
     footage_socket.connect('tcp://192.168.1.7:5555')

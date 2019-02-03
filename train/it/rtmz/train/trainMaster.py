@@ -11,7 +11,7 @@ def getFrame(socket):
     return cv2.imdecode(npimg, 1)
 
 
-if __name__ == "__main":
+if __name__ == "__main__":
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
     footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
