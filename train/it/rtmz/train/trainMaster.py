@@ -18,7 +18,8 @@ if __name__ == "__main__":
     footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
     while True:
-        cv2.imshow("Stream", getFrame(footage_socket))
+        frame = getFrame(footage_socket)
+        cv2.imshow("Stream", frame)
         k = cv2.waitKey(1)
         if k == 'q':
             cv2.destroyAllWindows()
