@@ -1,0 +1,7 @@
+{
+  "CAMERA_LEFT": 1,
+  "CAMERA_RIGHT": 0,
+  "THRESH": 80,
+  "MAX_AREA": 6000,
+  "MIN_AREA": 500
+}
