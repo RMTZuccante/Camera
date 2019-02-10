@@ -9,13 +9,18 @@ import java.io.IOException;
 
 public class Camera {
 
-    static char[] ref = new char[]{'H', 'S', 'U'};
+    static char[] ref = null;
     private static boolean libLoaded = false;
-    private Frame frame = new Frame(this);
+    int min, max, black;
     MultiLayerNetwork model;
+    private Frame frame = new Frame(this);
     private VideoCapture cap = new VideoCapture();
 
-    public Camera(MultiLayerNetwork model) {
+    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black) {
+        Camera.ref = ref;
+        this.max = max;
+        this.min = min;
+        this.black = black;
         this.model = model;
     }
 

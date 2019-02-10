@@ -44,6 +44,8 @@ def showStream(black, min, max, socket):
             app.stop()
             break
 
+def save(black):
+    print(app.getScale(black))
 
 if __name__ == "__main__":
     print('Your IPs are:')
@@ -70,6 +72,9 @@ if __name__ == "__main__":
     maxArea = "Max area"
     app.addLabelSpinBoxRange(maxArea, -1, 921600)
     app.setSpinBox(maxArea, 6000)
+
+    save = "Save"
+    app.addButton(save, save)
 
     app.thread(showStream, slider1, minArea, maxArea, footage_socket)
     app.go()

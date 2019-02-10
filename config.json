@@ -3,5 +3,6 @@
   "CAMERA_RIGHT": 0,
   "THRESH": 80,
   "MAX_AREA": 6000,
-  "MIN_AREA": 500
+  "MIN_AREA": 500,
+  "ref": ["H", "S", "U"]
 }

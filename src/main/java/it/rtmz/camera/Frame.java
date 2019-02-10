@@ -1,7 +1,6 @@
 package it.rtmz.camera;
 
 import org.datavec.image.loader.NativeImageLoader;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.opencv.core.Mat;
@@ -22,7 +21,7 @@ public class Frame extends Mat {
 
     public char predict() {
         Mat copy = this.clone();
-        ArrayList<MatOfPoint> conts = findShapes(500, 6000);
+        ArrayList<MatOfPoint> conts = findShapes();
         char pred = 0;
         double prob = 0;
         for (int i = 0; i < conts.size(); i++) {
@@ -53,19 +52,19 @@ public class Frame extends Mat {
         }
     }
 
-    private ArrayList<MatOfPoint> findShapes(int min, int max) {
+    private ArrayList<MatOfPoint> findShapes() {
         Mat gray = new Mat();
         Mat thresh = new Mat();
         Imgproc.cvtColor(this, gray, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.threshold(gray, thresh, 80, 255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(gray, thresh, cam.black, 255, Imgproc.THRESH_BINARY);
         ArrayList<MatOfPoint> conts = new ArrayList<>();
         Imgproc.findContours(thresh, conts, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        if (min == -1 || max == -1) return conts;
+        if (cam.min == -1 || cam.max == -1) return conts;
         else {
             ArrayList<MatOfPoint> inRange = new ArrayList<>();
             for (MatOfPoint c : conts) {
                 double area = Imgproc.contourArea(c);
-                if (area >= min && area <= max) inRange.add(c);
+                if (area >= cam.min && area <= cam.max) inRange.add(c);
             }
             return inRange;
         }
