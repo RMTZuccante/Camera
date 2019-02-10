@@ -9,7 +9,7 @@ if __name__ == "__main__":
     footage_socket = context.socket(zmq.PUB)
     footage_socket.connect('tcp://' + sys.argv[2] + ':5555')
 
-    camera = cv2.VideoCapture(sys.argv[1])  # init the camera
+    camera = cv2.VideoCapture(int(sys.argv[1]))  # init the camera
 
     while True:
         try:

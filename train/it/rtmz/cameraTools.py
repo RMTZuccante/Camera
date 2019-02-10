@@ -3,6 +3,7 @@ import zmq
 import base64
 import numpy as np
 from appJar import gui
+import socket
 
 
 def getFrame(socket):
@@ -45,6 +46,11 @@ def showStream(black, min, max, socket):
 
 
 if __name__ == "__main__":
+    print('Your IPs are:')
+    for ip in reversed([i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]):
+        print('\t', ip)
+    print()
+
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
     footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
