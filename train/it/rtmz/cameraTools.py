@@ -4,6 +4,7 @@ import base64
 import numpy as np
 from appJar import gui
 import socket
+import json
 
 
 def getFrame(socket):
@@ -26,11 +27,12 @@ def findShapes(image, range=None):
     return contours
 
 
-def showStream(black, min, max, socket):
+def showStream(socket):
+    global config
     while True:
         frame = cv2.cvtColor(getFrame(socket), cv2.COLOR_RGB2GRAY)
-        _, frame = cv2.threshold(frame, app.getScale(black), 255, cv2.THRESH_BINARY)
-        range = (int(app.getSpinBox(min)), int(app.getSpinBox(max)))
+        _, frame = cv2.threshold(frame, config['THRESH'], 255, cv2.THRESH_BINARY)
+        range = (int(config['MIN_AREA']), int(config['MAX_AREA']))
         if range[0] == -1 or range[1] == -1:
             range = None
 
@@ -44,10 +46,33 @@ def showStream(black, min, max, socket):
             app.stop()
             break
 
-def save(black):
-    print(app.getScale(black))
+
+def save():
+    global config, configfile
+    configfile.seek(0)
+    configfile.truncate()
+    json.dump(config, configfile)
+    configfile.flush()
+
+
+def threshSlide(slide):
+    global app, config
+    config['THRESH'] = app.getScale(slide)
+
+
+def setMinAera(spbox):
+    config['MIN_AREA'] = app.getSpinBox(spbox)
+
+
+def setMaxAera(spbox):
+    config['MAX_AREA'] = app.getSpinBox(spbox)
+
 
 if __name__ == "__main__":
+    global config, configfile
+
+    configfile = open('../../../config.json', 'r+')
+    config = json.load(configfile)
     print('Your IPs are:')
     for ip in reversed([i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]):
         print('\t', ip)
@@ -58,23 +83,23 @@ if __name__ == "__main__":
     footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
     footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
+    global app
     app = gui('Camera tools', "500x200")
 
-    slider1 = "Black"
-    app.addLabelScale(slider1)
-    app.setScaleRange(slider1, 0, 255, 80)
+    app.addLabelScale("Black")
+    app.setScaleRange("Black", 0, 255, 80)
     app.showScaleValue("Black", 1)
+    app.setScaleChangeFunction("Black", threshSlide)
 
-    minArea = "Min area"
-    app.addLabelSpinBoxRange(minArea, -1, 921600)
-    app.setSpinBox(minArea, 500)
+    app.addLabelSpinBoxRange("Min area", -1, 921600)
+    app.setSpinBox("Min area", 500)
+    app.setSpinBoxChangeFunction("Min area", setMinAera)
 
-    maxArea = "Max area"
-    app.addLabelSpinBoxRange(maxArea, -1, 921600)
-    app.setSpinBox(maxArea, 6000)
+    app.addLabelSpinBoxRange("Max area", -1, 921600)
+    app.setSpinBox("Max area", 6000)
+    app.setSpinBoxChangeFunction("Max area", setMaxAera)
 
-    save = "Save"
-    app.addButton(save, save)
+    app.addButton("Save", save)
 
-    app.thread(showStream, slider1, minArea, maxArea, footage_socket)
+    app.thread(showStream, footage_socket)
     app.go()
