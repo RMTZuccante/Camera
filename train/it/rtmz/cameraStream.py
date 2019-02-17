@@ -7,6 +7,7 @@ if __name__ == "__main__":
 
     context = zmq.Context()
     footage_socket = context.socket(zmq.PUB)
+    footage_socket.setsockopt(zmq.CONFLATE, 1)
     footage_socket.connect('tcp://' + sys.argv[2] + ':2626')
     footage_socket.setsockopt(zmq.SNDHWM, 1)
 

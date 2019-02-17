@@ -11,10 +11,14 @@ import json
 from socket import gethostname, getaddrinfo
 
 
+def errprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def getFrame(socket):
     frame = socket.recv_string()
     img = base64.b64decode(frame)
-    npimg = np.fromstring(img, dtype=np.uint8)
+    npimg = np.frombuffer(img, dtype=np.uint8)
     return cv2.imdecode(npimg, 1)
 
 
@@ -38,12 +42,14 @@ def findShapes(image, blackval, range=None):
 
 
 def train(model):
-    global labels
-    labels = utils.to_categorical(labels, num_classes=None)
     if len(labels) is 0:
-        sys.stderr.print('No collected images')
+        errprint('No collected images')
     else:
-        model.fit(array(images) / 255.0, labels, epochs=10)
+        lbls = utils.to_categorical(labels, num_classes=None)
+        try:
+            model.fit(array(images) / 255.0, lbls, epochs=10)
+        except ValueError:
+            errprint('Cannot train model with collected images, at least 1 image per character is needed')
 
 
 def test():
@@ -56,7 +62,7 @@ def test():
             img = cv2.resize(img, (80, 80))
             img = expand_dims(img, 0)
             pred = model.predict(img)
-            if amax(pred[0]) > .8:
+            if amax(pred[0]) > .999:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv2.putText(frame, ref[argmax(pred[0])].upper(), (x + w + 10, y + h), 0, 0.8, (0, 255, 0))
         cv2.imshow(title, frame)
@@ -80,9 +86,9 @@ def save():
             weights_file.close()
             print('Model saved')
         else:
-            sys.stderr.print('Cannot save an empty model!')
+            errprint('Cannot save an empty model!')
     except FileNotFoundError:
-        sys.stderr.print('Unable to save model, file not found')
+        errprint('Unable to save model, file not found')
 
 
 title = "Train"
@@ -105,6 +111,7 @@ if __name__ == "__main__":
 
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
+    footage_socket.setsockopt(zmq.CONFLATE, 1)
     footage_socket.bind('tcp://*:2626')  # Open socket @ port 2626
     footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
@@ -128,7 +135,7 @@ if __name__ == "__main__":
                     print('Model loaded')
                 except Exception as e:
                     print(str(e))
-                    sys.stderr.write('Error loading module, creating a new one\n')
+                    errprint('Error loading module, creating a new one\n')
                     model = None
 
             model_file.close()
@@ -144,6 +151,8 @@ if __name__ == "__main__":
         ])
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    print('Started')
 
     while True:
         frame = getFrame(footage_socket)
@@ -175,7 +184,6 @@ if __name__ == "__main__":
             test()
 
         elif k is ord('s'):
-            continue
             save()
 
         elif k is ord('q'):
