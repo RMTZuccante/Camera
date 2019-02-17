@@ -4,11 +4,11 @@ import base64
 import numpy as np
 from keras import utils, models, Sequential, layers
 from numpy import array, expand_dims, amax, argmax
-from time import sleep
 from os import path, makedirs
 from pickle import dump, load
 import sys
 import json
+from socket import gethostname, getaddrinfo
 
 
 def getFrame(socket):
@@ -65,31 +65,31 @@ def test():
 def save():
     global model
     try:
-        if not path.exists(p + '/../model/'):
-            makedirs(p + '/../model/')
+        if not path.exists('./model/'):
+            makedirs('./model/')
 
         if model is not None:
-            model.save(p + '/../model/model.h5')
-            model_file = open(p + '/../model/model.json', 'w')
-            weights_file = open(p + '/../model/weights.bin', 'wb')
+            model.save('./model/model.h5')
+            model_file = open('./model/model.json', 'w')
+            weights_file = open('./model/weights.bin', 'wb')
 
             model_file.write(model.to_json())
             model_file.close()
 
             dump(model.get_weights(), weights_file)
             weights_file.close()
-            stream.addMex('Model saved', (0, 255, 0))
-            sleep(2)
+            print('Model saved')
         else:
-            stream.addMex('Cannot save an empty model!', (0, 0, 255))
-            sleep(2)
+            sys.stderr.print('Cannot save an empty model!')
     except FileNotFoundError:
-        stream.addMex('Unable to save model, file not found', (0, 0, 255))
+        sys.stderr.print('Unable to save model, file not found')
 
 
 title = "Train"
 footage_socket = None
-min = max = thresh = 0
+min = 0
+max = 0
+thresh = 0
 labels = []
 images = []
 
@@ -105,8 +105,14 @@ if __name__ == "__main__":
 
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
-    footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
+    footage_socket.bind('tcp://*:2626')  # Open socket @ port 2626
     footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+
+    print('Hostname is: ', gethostname())
+    print('Your IPs are:')
+    for ip in reversed([i[4][0] for i in getaddrinfo(gethostname(), None)]):
+        print('\t', ip)
+    print()
 
     model = None
     if path.exists('./model/'):

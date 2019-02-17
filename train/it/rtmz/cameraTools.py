@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
-    footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
+    footage_socket.bind('tcp://*:2626')  # Open socket @ port 2626
     footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
     global app
