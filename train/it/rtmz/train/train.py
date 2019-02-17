@@ -2,13 +2,13 @@ import cv2
 import zmq
 import base64
 import numpy as np
-from tensorflow import get_default_graph
-from keras import models, layers, Sequential, utils
+from keras import utils, models, Sequential, layers
 from numpy import array, expand_dims, amax, argmax
 from time import sleep
-from os import path, makedirs, _exit
+from os import path, makedirs
 from pickle import dump, load
 import sys
+import json
 
 
 def getFrame(socket):
@@ -21,7 +21,11 @@ def getFrame(socket):
 def findShapes(image, blackval, range=None):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert the image from RGB to greyscale
     _, th = cv2.threshold(image, blackval, 255, cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
-    _, contours, _ = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
+    contours = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
+    if len(contours) == 3:
+        contours = contours[1]
+    else:
+        contours = contours[0]
 
     if range is not None:
         conts = []
@@ -33,8 +37,7 @@ def findShapes(image, blackval, range=None):
     return contours, image
 
 
-def train():
-    global images, labels, model
+def train(images, labels, model):
     labels = utils.to_categorical(labels, num_classes=None)
     if len(labels) is 0:
         sys.stderr.print('No collected images')
@@ -85,25 +88,66 @@ def save():
 
 
 title = "Train"
-ref = ['H', 'S', 'U']
 
 if __name__ == "__main__":
+    configfile = open('config.json', 'r')
+    config = json.load(configfile)
+    configfile.close()
+
+    thresh = int(config['THRESH'])
+    min = int(config['MIN_AREA'])
+    max = int(config['MAX_AREA'])
+    ref = config['ref']
+
     context = zmq.Context()
-    footage_socket = context.socket(zmq.SUB)
+    footage_socket = context.socket(zmq.PULL)
     footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
-    footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+
+    images = labels = []
+
+    model = None
+    if path.exists('./model/'):
+        try:
+            model_file = open('./model/model.json', 'r')
+            weights_file = open('./model/weights.bin', 'rb')
+
+            if input('Old model files found, would you like to load the old model? [y/n] ').lower() == 'y':
+                try:
+                    model = models.model_from_json(model_file.read())
+                    model.set_weights(load(weights_file))
+                    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+                    print('Model loaded')
+                except Exception as e:
+                    print(str(e))
+                    sys.stderr.write('Error loading module, creating a new one\n')
+                    model = None
+
+            model_file.close()
+            weights_file.close()
+        except FileNotFoundError:
+            model = None
+
+    if model is None:
+        model = Sequential([
+            layers.Flatten(input_shape=(80, 80)),
+            layers.Dense(128, activation='relu'),
+            layers.Dense(3, activation='softmax')
+        ])
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     while True:
         frame = getFrame(footage_socket)
 
         cv2.imshow(title, frame)
-        k = chr(cv2.waitKey(1))
+        k = cv2.waitKey(1)
+        if k > 0: k = chr(k)
 
         if k is 't':
-            train()
+            train(model)
 
-        elif k is '':
-            shapes, gray = findShapes(frame, 80, (500, 6000))
+        elif k is ' ':
+            shapes, gray = findShapes(frame, thresh, (min, max))
             for c in shapes:
                 img = frame.copy()
                 cv2.drawContours(img, [c], -1, (0, 255, 0), 1)

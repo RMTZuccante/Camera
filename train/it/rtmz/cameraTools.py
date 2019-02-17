@@ -15,7 +15,11 @@ def getFrame(socket):
 
 
 def findShapes(image, range=None):
-    _, contours, _ = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
+    contours = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
+    if len(contours) == 3:
+        contours = contours[1]
+    else:
+        contours = contours[0]
 
     if range is not None:
         conts = []
@@ -31,7 +35,7 @@ def showStream(socket):
     global config
     while True:
         frame = cv2.cvtColor(getFrame(socket), cv2.COLOR_RGB2GRAY)
-        _, frame = cv2.threshold(frame, config['THRESH'], 255, cv2.THRESH_BINARY)
+        _, frame = cv2.threshold(frame, int(config['THRESH']), 255, cv2.THRESH_BINARY)
         range = (int(config['MIN_AREA']), int(config['MAX_AREA']))
         if range[0] == -1 or range[1] == -1:
             range = None
@@ -71,7 +75,7 @@ def setMaxAera(spbox):
 if __name__ == "__main__":
     global config, configfile
 
-    configfile = open('../../../config.json', 'r+')
+    configfile = open('config.json', 'r+')
     config = json.load(configfile)
     print('Your IPs are:')
     for ip in reversed([i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]):
