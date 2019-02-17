@@ -6,7 +6,7 @@ import sys
 if __name__ == "__main__":
 
     context = zmq.Context()
-    footage_socket = context.socket(zmq.PUSH)
+    footage_socket = context.socket(zmq.PUB)
     footage_socket.connect('tcp://' + sys.argv[2] + ':5555')
     footage_socket.setsockopt(zmq.SNDHWM, 1)
 

@@ -37,7 +37,8 @@ def findShapes(image, blackval, range=None):
     return contours, image
 
 
-def train(images, labels, model):
+def train(model):
+    global labels
     labels = utils.to_categorical(labels, num_classes=None)
     if len(labels) is 0:
         sys.stderr.print('No collected images')
@@ -46,20 +47,19 @@ def train(images, labels, model):
 
 
 def test():
-    with graph.as_default():
-        while (keys.empty() or keys.get() != 'q'):
-            frame = camera.Camera.read()
-            conts, grey = camera.Utils.findShapes(frame, (500, 6000))
-            for c in conts:
-                x, y, w, h = cv2.boundingRect(c)
-                img = grey[y: y + h, x:x + w]
-                img = cv2.resize(img, (80, 80))
-                img = expand_dims(img, 0)
-                pred = model.predict(img)
-                if amax(pred[0]) > .8:
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    cv2.putText(frame, ref[argmax(pred[0])].upper(), (x + w + 10, y + h), 0, 0.8, (0, 255, 0))
-            stream.add(frame)
+    while (cv2.waitKey(1) != ord('q')):
+        frame = getFrame(footage_socket)
+        conts, grey = findShapes(frame, thresh, (min, max))
+        for c in conts:
+            x, y, w, h = cv2.boundingRect(c)
+            img = grey[y: y + h, x:x + w]
+            img = cv2.resize(img, (80, 80))
+            img = expand_dims(img, 0)
+            pred = model.predict(img)
+            if amax(pred[0]) > .8:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(frame, ref[argmax(pred[0])].upper(), (x + w + 10, y + h), 0, 0.8, (0, 255, 0))
+        cv2.imshow(title, frame)
 
 
 def save():
@@ -88,6 +88,10 @@ def save():
 
 
 title = "Train"
+footage_socket = None
+min = max = thresh = 0
+labels = []
+images = []
 
 if __name__ == "__main__":
     configfile = open('config.json', 'r')
@@ -100,10 +104,9 @@ if __name__ == "__main__":
     ref = config['ref']
 
     context = zmq.Context()
-    footage_socket = context.socket(zmq.PULL)
+    footage_socket = context.socket(zmq.SUB)
     footage_socket.bind('tcp://*:5555')  # Open socket @ port 5555
-
-    images = labels = []
+    footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
     model = None
     if path.exists('./model/'):
@@ -141,12 +144,11 @@ if __name__ == "__main__":
 
         cv2.imshow(title, frame)
         k = cv2.waitKey(1)
-        if k > 0: k = chr(k)
 
-        if k is 't':
+        if k is ord('t'):
             train(model)
 
-        elif k is ' ':
+        elif k is ord(' '):
             shapes, gray = findShapes(frame, thresh, (min, max))
             for c in shapes:
                 img = frame.copy()
@@ -154,21 +156,22 @@ if __name__ == "__main__":
                 x, y, w, h = cv2.boundingRect(c)
                 cv2.rectangle(img, (x, y), (x + w, y + h), (10, 71, 239), 2)
                 for i in range(0, 2): cv2.imshow(title, img)
-                k = chr(cv2.waitKey())
+                k = chr(cv2.waitKey()).upper()
                 if k in ref:
                     lim = gray[y: y + h, x:x + w]
                     lim = cv2.resize(lim, (80, 80))
                     labels.append(ref.index(k))
                     images.append(lim)
-                elif k is 'q':
+                elif k is ord('q'):
                     break
 
-        elif k is 'c':
+        elif k is ord('c'):
             test()
 
-        elif k is 's':
+        elif k is ord('s'):
+            continue
             save()
 
-        elif k is 'q':
+        elif k is ord('q'):
             cv2.destroyAllWindows()
             break
