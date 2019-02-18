@@ -24,7 +24,7 @@ public class Camera {
         this.model = model;
     }
 
-    static public boolean loadLib(String path) {
+    public static boolean loadLib(String path) {
         if (libLoaded) return true;
         if (path == null || path.length() == 0) {
             System.out.println("[INFO]: No lib path specified, searching in this directory");
@@ -74,14 +74,6 @@ public class Camera {
             return false;
         }
         return cap.open(i);
-    }
-
-    public boolean open(String fn) {
-        if (!libLoaded) {
-            System.err.println("[ERR]: Trying opening camera without loading library");
-            return false;
-        }
-        return cap.open(fn);
     }
 
     public Frame capture() throws IOException {

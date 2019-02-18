@@ -25,11 +25,8 @@ def getFrame(socket):
 def findShapes(image, blackval, range=None):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert the image from RGB to greyscale
     _, th = cv2.threshold(image, blackval, 255, cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
-    contours = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes
-    if len(contours) == 3:
-        contours = contours[1]
-    else:
-        contours = contours[0]
+    contours = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes (it returns other values like the success)
+    contours = contours[len(contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
 
     if range is not None:
         conts = []
