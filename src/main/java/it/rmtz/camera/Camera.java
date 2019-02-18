@@ -1,4 +1,4 @@
-package it.rtmz.camera;
+package it.rmtz.camera;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;

@@ -1,6 +1,6 @@
-package it.rtmz.utils;
+package it.rmtz.utils;
 
-import it.rtmz.camera.Camera;
+import it.rmtz.camera.Camera;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
