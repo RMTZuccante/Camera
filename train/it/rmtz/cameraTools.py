@@ -77,6 +77,7 @@ if __name__ == "__main__":
 
     configfile = open('config.json', 'r+')
     config = json.load(configfile)
+    print('Your hostname is: ', socket.gethostname())
     print('Your IPs are:')
     for ip in reversed([i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]):
         print('\t', ip)
