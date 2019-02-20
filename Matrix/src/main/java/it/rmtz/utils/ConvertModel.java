@@ -12,10 +12,10 @@ import java.io.IOException;
 public class ConvertModel {
     public static void main(String[] args) {
         try {
-            System.out.println("Looking for model.h5 in this directory");
-            File f = new File("model.h5");
+            System.out.println("Looking for model.h5 in ./model");
+            File f = new File("./model/model.h5");
             MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(f.getAbsolutePath());
-            ModelSerializer.writeModel(model, new File("model.dl4j"), true);
+            ModelSerializer.writeModel(model, new File("./model/model.dl4j"), true);
             System.out.println("Model converted");
         } catch (IOException e) {
             System.err.println("File not found");
