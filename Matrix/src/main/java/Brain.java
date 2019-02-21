@@ -48,6 +48,12 @@ public class Brain {
         }
 
         if (!getValuesFromJson(config) || !Camera.loadLib(lp)) {
+            if (!Camera.isLibLoaded()) {
+                System.err.println("Error loading lib");
+            }
+            if (ref == null) {
+                System.err.println("Error loading config");
+            }
             System.err.println("Can't use camera, continuing anyway");
         } else {
             File f = new File(modelpath);
@@ -67,8 +73,8 @@ public class Brain {
 
         if (!cameraloaded) {
             System.err.println("Error loading cameras, continuing anyway");
-            left.close();
-            right.close();
+            if (left != null) left.close();
+            if (right != null) right.close();
             left = right = null;
         }
 
