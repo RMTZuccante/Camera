@@ -11,17 +11,24 @@ public class Camera {
 
     static char[] ref = null;
     private static boolean libLoaded = false;
-    int min, max, black;
+    int min, max, black, offset;
+    double precision;
     MultiLayerNetwork model;
     private Frame frame = new Frame(this);
     private VideoCapture cap = new VideoCapture();
 
-    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black) {
+    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision) {
         Camera.ref = ref;
         this.max = max;
         this.min = min;
         this.black = black;
         this.model = model;
+        this.offset = offset;
+        this.precision = precision;
+    }
+
+    public static boolean isLibLoaded() {
+        return libLoaded;
     }
 
     public static boolean loadLib(String path) {
@@ -74,6 +81,10 @@ public class Camera {
             return false;
         }
         return cap.open(i);
+    }
+
+    public void close() {
+        cap.release();
     }
 
     public Frame capture() throws IOException {

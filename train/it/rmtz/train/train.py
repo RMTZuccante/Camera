@@ -5,7 +5,6 @@ import numpy as np
 from keras import utils, models, Sequential, layers
 from numpy import array, expand_dims, amax, argmax
 from os import path, makedirs
-from pickle import dump, load
 import sys
 import json
 from socket import gethostname, getaddrinfo
@@ -41,12 +40,15 @@ def findShapes(image, blackval, range=None):
 
 
 def train(model):
+    global labels, images
     if len(labels) is 0:
         errprint('No collected images')
     else:
         lbls = utils.to_categorical(labels, num_classes=None)
         try:
             model.fit(array(images) / 255.0, lbls, epochs=10)
+            labels = []
+            images = []
         except ValueError:
             errprint('Cannot train model with collected images, at least 1 image per character is needed')
 
@@ -57,13 +59,14 @@ def test():
         conts, grey = findShapes(frame, thresh, (min, max))
         for c in conts:
             x, y, w, h = cv2.boundingRect(c)
-            img = grey[y: y + h, x:x + w]
+            img = grey[y - offset: y + h + offset, x:x + w + offset]
             img = cv2.resize(img, (80, 80))
             img = expand_dims(img, 0)
-            pred = model.predict(img)
-            if amax(pred[0]) > .999:
+            pred = model.predict(img / 255.0)
+            if amax(pred[0]) > precision:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, ref[argmax(pred[0])].upper(), (x + w + 10, y + h), 0, 0.8, (0, 255, 0))
+                cv2.putText(frame, ref[argmax(pred[0])].upper() + ' ' + str("%.3f" % (amax(pred[0]) * 100)) + '%',
+                            (x + w + 10, y + h), 0, 0.8, (0, 255, 0))
         cv2.imshow(title, frame)
 
 
@@ -97,6 +100,7 @@ max = 0
 thresh = 0
 labels = []
 images = []
+precision = 0
 
 if __name__ == "__main__":
     configfile = open('../config.json', 'r')
@@ -107,6 +111,8 @@ if __name__ == "__main__":
     min = int(config['MIN_AREA'])
     max = int(config['MAX_AREA'])
     ref = config['ref']
+    offset = int(config['OFFSET'])
+    precision = float(config['PRECISION'])
 
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
@@ -122,25 +128,14 @@ if __name__ == "__main__":
 
     model = None
     if path.exists('../model/'):
-        try:
-            model_file = open('../model/model.json', 'r')
-            weights_file = open('../model/weights.bin', 'rb')
-
-            if input('Old model files found, would you like to load the old model? [y/n] ').lower() == 'y':
-                try:
-                    model = models.model_from_json(model_file.read())
-                    model.set_weights(load(weights_file))
-                    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-                    print('Model loaded')
-                except Exception as e:
-                    print(str(e))
-                    errprint('Error loading module, creating a new one\n')
-                    model = None
-
-            model_file.close()
-            weights_file.close()
-        except FileNotFoundError:
-            model = None
+        if input('Old model files found, would you like to load the old model? [y/n] ').lower() == 'y':
+            try:
+                model = models.load_model('../model/model.h5')
+                print('Model loaded')
+            except Exception as e:
+                print(str(e))
+                errprint('Error loading module, creating a new one\n')
+                model = None
 
     if model is None:
         model = Sequential([
@@ -168,11 +163,11 @@ if __name__ == "__main__":
                 img = frame.copy()
                 cv2.drawContours(img, [c], -1, (0, 255, 0), 1)
                 x, y, w, h = cv2.boundingRect(c)
-                cv2.rectangle(img, (x, y), (x + w, y + h), (10, 71, 239), 2)
+                cv2.rectangle(img, (x - offset, y - offset), (x + w + offset, y + h + offset), (10, 71, 239), 2)
                 for i in range(0, 2): cv2.imshow(title, img)
                 k = chr(cv2.waitKey()).upper()
                 if k in ref:
-                    lim = gray[y: y + h, x:x + w]
+                    lim = gray[y - offset: y + h + offset, x - offset:x + w + offset]
                     lim = cv2.resize(lim, (80, 80))
                     labels.append(ref.index(k))
                     images.append(lim)

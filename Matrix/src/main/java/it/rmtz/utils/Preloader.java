@@ -10,41 +10,61 @@ import org.opencv.videoio.VideoCapture;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
+import java.util.Scanner;
 
 public class Preloader {
     public static void main(String[] args) {
-        ServerSocket prserver = null;
         try {
-            prserver = new ServerSocket(1026);
+            ServerSocket prserver = new ServerSocket(1026, 10, InetAddress.getLocalHost());
+            new Thread(() -> {
+                for (; ; ) {
+                    try {
+                        Socket client = prserver.accept();
+                        Scanner in = new Scanner(client.getInputStream());
+                        while (client.isConnected()) {
+                            System.out.println(in.next());
+                        }
+                    } catch (IOException e) {
+                        System.exit(-1);
+                    }
+                }
+            }).start();
         } catch (IOException e) {
             System.err.println("Another preloader is already running, passing arguments to it");
-            try {
-                Socket client = new Socket("localhost", 1026);
-                OutputStreamWriter w = new OutputStreamWriter(client.getOutputStream());
-                w.write(Arrays.toString(args));
-                w.flush();
-                w.close();
-                client.close();
-            } catch (IOException e1) {
-                System.err.println("Cannot connect to preloader");
-                System.exit(-1);
-            }
+            if (args.length > 0) {
+                try {
+                    Socket client = new Socket(InetAddress.getLocalHost(), 1026);
+                    OutputStreamWriter out = new OutputStreamWriter(client.getOutputStream());
+                    for (int i = 0; i < args.length - 1; i++) {
+                        out.write(args[i]);
+                        out.write(1);
+                    }
+                    out.write(args[args.length - 1]);
+                    out.flush();
+                    out.close();
+                    client.close();
+                } catch (IOException e1) {
+                    System.err.println("Cannot connect to preloader");
+                    System.exit(-1);
+                }
+            } else
+                System.err.println("No arguments to pass");
             System.exit(0);
         }
 
 
         String lp = null;
-        String modelpath = "model.dl4j";
+        String modelpath = "./model/model.dl4j";
         if (args != null && args.length > 0) {
             int i = 0;
             try {
                 for (i = 0; i < args.length; i++) {
                     if (args[i].equals("-lp")) {
                         lp = args[++i];
-                    } else if (args[i].equals("-m")) {
+                    } else if (args[i].equals("-mp")) {
                         modelpath = args[++i];
                     }
                 }

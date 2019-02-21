@@ -3,10 +3,7 @@ package it.rmtz.camera;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Rect;
-import org.opencv.core.Size;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -19,7 +16,7 @@ public class Frame extends Mat {
         cam = c;
     }
 
-    public char predict() {
+    public synchronized char predict() {
         Mat copy = this.clone();
         ArrayList<MatOfPoint> conts = findShapes();
         char pred = 0;
@@ -29,7 +26,7 @@ public class Frame extends Mat {
             Rect bound = Imgproc.boundingRect(c);
             INDArray arr = getInputImage(copy, bound);
             INDArray predict = cam.model.output(arr);
-            if (predict.amax().getDouble(0) > 0.9999 && predict.amax().getDouble(0) > prob) {
+            if (predict.amax().getDouble(0) > cam.precision && predict.amax().getDouble(0) > prob) {
                 prob = predict.amax().getDouble(0);
                 pred = Camera.ref[predict.argMax().getInt(0)];
             }
@@ -38,7 +35,11 @@ public class Frame extends Mat {
     }
 
     private INDArray getInputImage(Mat img, Rect rect) {
-        img = new Mat(img, rect);
+        try {
+            img = new Mat(img, new Rect(rect.x - cam.offset, rect.y - cam.offset, rect.height + cam.offset * 2, rect.width + cam.offset * 2));
+        } catch (CvException e) {
+            img = new Mat(img, rect);
+        }
         Imgproc.cvtColor(img, img, Imgproc.COLOR_BGR2GRAY);
         Imgproc.resize(img, img, new Size(80, 80));
         NativeImageLoader loader = new NativeImageLoader(80, 80, 1);
