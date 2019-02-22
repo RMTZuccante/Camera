@@ -7,7 +7,6 @@ import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
-import org.opencv.highgui.HighGui;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,13 +22,6 @@ public class Brain {
         JsonObject config = null;
         Camera left = null, right = null;
         boolean cameraloaded = false;
-
-        try {
-            config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
-        } catch (FileNotFoundException e) {
-            System.err.println("Cannot find config.json");
-            System.exit(-1);
-        }
 
         String lp = null;
         String modelpath = "./model/model.dl4j";
@@ -49,53 +41,64 @@ public class Brain {
             }
         }
 
-        if (!getValuesFromJson(config) || !Camera.loadLib(lp)) {
-            if (!Camera.isLibLoaded()) {
-                System.err.println("Error loading lib");
-            }
-            if (ref == null) {
-                System.err.println("Error loading config");
-            }
-            System.err.println("Can't use camera, continuing anyway");
-        } else {
-            File f = new File(modelpath);
-            MultiLayerNetwork model = null;
-            if (f.exists() && f.canRead()) {
-                try {
-                    model = ModelSerializer.restoreMultiLayerNetwork(f.getAbsolutePath());
-                    left = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
-                    right = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
-                    cameraloaded = left.open(cl) && right.open(cr);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    model = null;
-                }
-            }
+        try {
+            config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
+        } catch (FileNotFoundException e) {
+            System.err.println("Cannot find config.json");
+            System.exit(-1);
         }
 
-        if (!cameraloaded) {
-            System.err.println("Error loading cameras, continuing anyway");
-            if (left != null) left.close();
-            if (right != null) right.close();
-            left = right = null;
+        if (getValuesFromJson(config)) {
+            if (Camera.loadLib(lp)) {
+                File f = new File(modelpath);
+                MultiLayerNetwork model = null;
+                if (f.exists() && f.canRead()) {
+                    try {
+                        model = ModelSerializer.restoreMultiLayerNetwork(f.getAbsolutePath());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.err.println("\n\nError loading model:");
+                        model = null;
+                    }
+                } else {
+                    System.err.println("Missing model file");
+                }
+
+                if (model != null) {
+                    left = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
+                    right = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
+
+                    cameraloaded = true;
+                    if (!left.open(cl)) {
+                        System.err.println("Error opening left camera. index: " + cl);
+                        cameraloaded = false;
+                    }
+
+                    if (!right.open(cr)) {
+                        System.err.println("Error opening right camera. index: " + cr);
+                        cameraloaded = false;
+                    }
+                }
+            } else {
+                System.err.println("Error loading lib, provided path may be wrong");
+            }
+        } else {
+            System.err.println("Error loading config.json");
         }
+
+        if (!cameraloaded) System.err.println("Cameras are not loaded, continuing anyway");
 
         while (cameraloaded) {
             try {
-                HighGui.imshow("left", left.capture());
-                HighGui.imshow("right", right.capture());
-                HighGui.waitKey(1);
-                System.out.println("Left: " + left.getFrame().predict());
-                System.out.println("Right: " + right.getFrame().predict());
+                System.out.println("Left: " + left.capture().predict());
+                System.out.println("Right: " + right.capture().predict());
             } catch (IOException e) {
                 left.close();
                 right.close();
                 cameraloaded = false;
             }
         }
-        HighGui.destroyWindow("left");
-        HighGui.destroyWindow("right");
-        System.out.println("Starting");
+        System.out.println("Ready to start");
     }
 
     private static boolean getValuesFromJson(JsonObject obj) {
