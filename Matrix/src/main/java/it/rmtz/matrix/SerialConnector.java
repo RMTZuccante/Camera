@@ -42,10 +42,7 @@ public class SerialConnector extends MatrixConnector {
         stm.writeBytes(buffer, 2);
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-        if (recv == 1 && buffer[0] == (byte) (n * 2))
-            return true;
-        else
-            return false;
+        return recv == 1 && buffer[0] == (byte) (n * 2);
     }
 
     @Override
@@ -60,8 +57,7 @@ public class SerialConnector extends MatrixConnector {
 
     void rotate(int angle, boolean right) {
         buffer[0] = ROTATE;
-        if (right) buffer[1] = 0;//Turn right
-        else buffer[0] = 1; //Turn left
+        buffer[1] = (byte) (right?1:0);
         buffer[2] = (byte) angle;
         stm.writeBytes(buffer, 3);
         stm.readBytes(buffer, 1);
