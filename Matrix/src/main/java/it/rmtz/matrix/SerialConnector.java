@@ -3,7 +3,7 @@ package it.rmtz.matrix;
 import com.fazecast.jSerialComm.SerialPort;
 
 /**
- * Created by Nicolò Tagliaferro
+ * Created by NicolÃ² Tagliaferro
  */
 
 public class SerialConnector extends MatrixConnector {
@@ -16,17 +16,18 @@ public class SerialConnector extends MatrixConnector {
     int GOBLACK = 1, GOOBSTACLE = 2;
 
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
-    private SerialPort esp;
+    private SerialPort stm;
 
-    SerialConnector(SerialPort esp) {
-        this.esp = esp;
+    SerialConnector(SerialPort stm, int baudRate) {
+        this.stm = stm;
         /*Try opening port*/
-        if (!esp.openPort()) {
-            System.err.println("Cannot open port " + esp.getSystemPortName());
+        stm.setBaudRate(baudRate);
+        if (!stm.openPort()) {
+            System.err.println("Cannot open port " + stm.getSystemPortName());
             System.exit(-1);
         }
         /*Set port read to blocking, 0 = unlimited timeout, see https://github.com/Fazecast/jSerialComm/wiki/Blocking-and-Semiblocking-Reading-Usage-Example*/
-        esp.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+        stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
     }
 
     @Override
@@ -34,13 +35,13 @@ public class SerialConnector extends MatrixConnector {
      * Send the HANDSHAKE command and a number, the expected response is 2 times the number
      */
     boolean handShake() {
-        esp.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
+        stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
         byte n = 24;
         buffer[0] = HANDSHAkE;
         buffer[1] = n;
-        esp.writeBytes(buffer, 2);
-        int recv = esp.readBytes(buffer, 1);
-        esp.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+        stm.writeBytes(buffer, 2);
+        int recv = stm.readBytes(buffer, 1);
+        stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
         if (recv == 1 && buffer[0] == (byte) (n * 2))
             return true;
         else
@@ -62,8 +63,8 @@ public class SerialConnector extends MatrixConnector {
         if (right) buffer[1] = 0;//Turn right
         else buffer[0] = 1; //Turn left
         buffer[2] = (byte) angle;
-        esp.writeBytes(buffer, 3);
-        esp.readBytes(buffer, 1);
+        stm.writeBytes(buffer, 3);
+        stm.readBytes(buffer, 1);
     }
 
     @Override

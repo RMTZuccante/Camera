@@ -1,7 +1,7 @@
 package it.rmtz.matrix;
 
 /**
- * Created by Nicolò Tagliaferro
+ * Created by NicolÃ² Tagliaferro
  */
 
 public abstract class MatrixConnector {
