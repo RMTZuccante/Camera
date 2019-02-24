@@ -1,5 +1,3 @@
-package it.rmtz.matrix;
-
 /**
  * Created by Nicolò Tagliaferro
  */
@@ -16,6 +14,8 @@ public abstract class MatrixConnector {
     abstract void rotate(int angle);
 
     abstract int go();
+
+    abstract void victim(int packets);
 
     abstract int[] getDistances();
 

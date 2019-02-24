@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
  */
 
 public class SerialConnector extends MatrixConnector {
-    final byte HANDSHAkE = 1, ROTATE = 2, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6;
+    final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7;
     byte[] buffer = new byte[10];
 
     int DFRONT1 = 0, DFRONT2 = 1, DRIGHT = 3, DLEFT = 4, DBACK = 5;
@@ -66,7 +66,18 @@ public class SerialConnector extends MatrixConnector {
 
     @Override
     int go() {
-        return 0;
+        buffer[0] = GO;
+        stm.writeBytes(buffer,1);
+        stm.readBytes(buffer,1);
+        return buffer[0];
+    }
+
+    @Override
+    void victim(int packets) {
+        buffer[0] = VICTIM;
+        buffer[1] = (byte) packets;
+        stm.writeBytes(buffer,2);
+        stm.readBytes(buffer,1);
     }
 
     @Override
