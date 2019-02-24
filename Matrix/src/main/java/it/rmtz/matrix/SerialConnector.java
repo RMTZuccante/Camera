@@ -1,6 +1,7 @@
-package it.rmtz.matrix;
-
 import com.fazecast.jSerialComm.SerialPort;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Created by Nicolò Tagliaferro
@@ -8,7 +9,7 @@ import com.fazecast.jSerialComm.SerialPort;
 
 public class SerialConnector extends MatrixConnector {
     final byte HANDSHAkE = 1, ROTATE = 2, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6;
-    byte[] buffer = new byte[8];
+    byte[] buffer = new byte[10];
 
     int DFRONT1 = 0, DFRONT2 = 1, DRIGHT = 3, DLEFT = 4, DBACK = 5;
     int MIRROR = 1, WHITE = 0;
@@ -42,10 +43,7 @@ public class SerialConnector extends MatrixConnector {
         stm.writeBytes(buffer, 2);
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-        if (recv == 1 && buffer[0] == (byte) (n * 2))
-            return true;
-        else
-            return false;
+        return recv == 1 && buffer[0] == (byte) (n * 2);
     }
 
     @Override
@@ -60,8 +58,7 @@ public class SerialConnector extends MatrixConnector {
 
     void rotate(int angle, boolean right) {
         buffer[0] = ROTATE;
-        if (right) buffer[1] = 0;//Turn right
-        else buffer[0] = 1; //Turn left
+        buffer[1] = (byte) (right?1:0);
         buffer[2] = (byte) angle;
         stm.writeBytes(buffer, 3);
         stm.readBytes(buffer, 1);
@@ -74,16 +71,33 @@ public class SerialConnector extends MatrixConnector {
 
     @Override
     int[] getDistances() {
-        return new int[0];
+        int length = 2;
+        int num = 5;
+        buffer[0] = GETDISTANCES;
+        stm.writeBytes(buffer, 1);
+        stm.readBytes(buffer, length*num);
+        int[] arr = new int[num];
+        for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        return arr;
     }
 
     @Override
     int getColor() {
-        return 0;
+        buffer[0] = GETCOLOR;
+        stm.writeBytes(buffer,1);
+        stm.readBytes(buffer,1);
+        return buffer[0];
     }
 
     @Override
     float[] getTemps() {
-        return new float[0];
+        int length = 4;
+        int num = 2;
+        buffer[0] = GETTEMPS;
+        stm.writeBytes(buffer,1);
+        stm.readBytes(buffer, length*num);
+        float[] arr = new float[num];
+        for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+        return arr;
     }
 }
