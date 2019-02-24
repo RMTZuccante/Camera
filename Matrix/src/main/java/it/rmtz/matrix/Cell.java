@@ -3,7 +3,7 @@ package it.rmtz.matrix;
 public class Cell {
     Cell north, south, east, west;
     boolean visited = false, mirror = false, black = false, victim = false;
-    int weight = 1;
+    int weight = 5;
 
     Cell() {
         north = south = east = west = null;

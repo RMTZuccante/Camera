@@ -11,6 +11,8 @@ public class Matrix {
     private Cell start, actual;
     private float bodyTemp;
 
+    private Step nextStep = null;
+
     public Matrix(MatrixConnector connector, Camera left, Camera right) {
         this.left = left;
         this.right = right;
@@ -60,8 +62,56 @@ public class Matrix {
         }
     }
 
-    private void nextCell() {
+    private Direction nextDirection() {
+        if (nextStep == null) {
+            nextStep = pathFinding(null, actual);
+        }
+        if (directions.isEmpty()) {
+            pathFinding(actual, getCellByCardinalDirection(actual, direction), direction, 0);
+            byte newdir = getNewCardinalDirection(direction, Direction.RIGHT);
+            pathFinding(actual, getCellByCardinalDirection(actual, newdir), newdir, 1);
+            newdir = getNewCardinalDirection(direction, Direction.LEFT);
+            pathFinding(actual, getCellByCardinalDirection(actual, newdir), newdir, 1);
+        }
+        return directions.poll();
+    }
 
+    private Step pathFinding(Cell prev, Cell now, byte direction, int weight) {
+        Cell next = getCellByCardinalDirection(now, direction);
+        if (next != prev) {
+            pathFinding(now, getCellByCardinalDirection(now, direction), direction, 0);
+        }
+        byte newdir = getNewCardinalDirection(direction, Direction.RIGHT);
+        pathFinding(now, getCellByCardinalDirection(now, newdir), newdir, 1);
+        newdir = getNewCardinalDirection(direction, Direction.LEFT);
+        pathFinding(now, getCellByCardinalDirection(now, newdir), newdir, 1);
+
+        if (!now.visited) {
+            if (now.north != prev) pathFinding(now, now.north, direction);
+            if (now.east != prev) pathFinding(now, now.east, direction);
+            if (now.south != prev) pathFinding(now, now.south, direction);
+            if (now.east != prev) pathFinding(now, now.east, direction);
+        }
+    }
+
+    private Cell getCellByCardinalDirection(Cell cell, byte dir) {
+        Cell c;
+        if (dir == NORTH) c = cell.north;
+        else if (dir == SOUTH) c = cell.south;
+        else if (dir == EAST) c = cell.east;
+        else c = cell.west;
+        return c;
+    }
+
+    private byte getNewCardinalDirection(byte start, Direction rot) {
+        if (rot == Direction.LEFT) {
+            start++;
+        } else if (rot == Direction.RIGHT) {
+            start--;
+        } else if (rot == Direction.BACK) {
+            start += 2;
+        }
+        return (byte) Math.floorMod(start, 4);
     }
 
     private void addFrontCell() {
@@ -177,6 +227,26 @@ public class Matrix {
                     actual.west.east = actual;
                 }
                 break;
+        }
+    }
+
+    private enum Direction {
+        LEFT,
+        RIGHT,
+        FRONT,
+        BACK
+    }
+
+    private class Step {
+        Direction direction;
+        Step next;
+
+        Step(Direction direction) {
+            this.direction = direction;
+        }
+
+        Step() {
+
         }
     }
 }
