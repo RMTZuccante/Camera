@@ -1,3 +1,5 @@
+package it.rmtz.matrix;
+
 import com.fazecast.jSerialComm.SerialPort;
 
 import java.nio.ByteBuffer;
