@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
+import it.rmtz.matrix.Matrix;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 
@@ -21,7 +22,6 @@ public class Brain {
     public static void main(String[] args) {
         JsonObject config = null;
         Camera left = null, right = null;
-        boolean cameraloaded = false;
 
         String lp = null;
         String modelpath = "./model/model.dl4j";
@@ -68,15 +68,12 @@ public class Brain {
                     left = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
                     right = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
 
-                    cameraloaded = true;
                     if (!left.open(cl)) {
                         System.err.println("Error opening left camera. index: " + cl);
-                        cameraloaded = false;
                     }
 
                     if (!right.open(cr)) {
                         System.err.println("Error opening right camera. index: " + cr);
-                        cameraloaded = false;
                     }
                 }
             } else {
@@ -86,19 +83,21 @@ public class Brain {
             System.err.println("Error loading config.json");
         }
 
-        if (!cameraloaded) System.err.println("Cameras are not loaded, continuing anyway");
-
-        while (cameraloaded) {
+        /*while (true) {
             try {
                 System.out.println("Left: " + left.capture().predict());
                 System.out.println("Right: " + right.capture().predict());
+                HighGui.imshow("l", left.getFrame());
+                HighGui.imshow("r", right.getFrame());
+                HighGui.waitKey(1);
             } catch (IOException e) {
                 left.close();
                 right.close();
                 cameraloaded = false;
             }
-        }
+        }*/
         System.out.println("Ready to start");
+        Matrix m = new Matrix(left, right);
     }
 
     private static boolean getValuesFromJson(JsonObject obj) {

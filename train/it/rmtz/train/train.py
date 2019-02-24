@@ -18,7 +18,7 @@ def getFrame(socket):
     frame = socket.recv_string()
     img = base64.b64decode(frame)
     npimg = np.frombuffer(img, dtype=np.uint8)
-    return cv2.imdecode(npimg, 1)
+    return cv2.rotate(cv2.imdecode(npimg, 1), cv2.ROTATE_180)
 
 
 def findShapes(image, blackval, range=None):
@@ -54,13 +54,20 @@ def train(model):
 
 
 def test():
+    print('Testing')
     while (cv2.waitKey(1) != ord('q')):
         frame = getFrame(footage_socket)
         conts, grey = findShapes(frame, thresh, (min, max))
         for c in conts:
             x, y, w, h = cv2.boundingRect(c)
             img = grey[y - offset: y + h + offset, x:x + w + offset]
-            img = cv2.resize(img, (80, 80))
+            try:
+                img = cv2.resize(img, (80, 80))
+            except cv2.error:
+                print('sucz')
+                img = grey[y: y + h, x:x + w]
+                img = cv2.resize(img, (80, 80))
+            _, img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)
             img = expand_dims(img, 0)
             pred = model.predict(img / 255.0)
             if amax(pred[0]) > precision:
@@ -68,6 +75,7 @@ def test():
                 cv2.putText(frame, ref[argmax(pred[0])].upper() + ' ' + str("%.3f" % (amax(pred[0]) * 100)) + '%',
                             (x + w + 10, y + h), 0, 0.8, (0, 255, 0))
         cv2.imshow(title, frame)
+    print('Quit testing')
 
 
 def save():
@@ -170,7 +178,8 @@ if __name__ == "__main__":
                     lim = gray[y - offset: y + h + offset, x - offset:x + w + offset]
                     lim = cv2.resize(lim, (80, 80))
                     labels.append(ref.index(k))
-                    images.append(lim)
+                    _, th = cv2.threshold(lim, thresh, 255, cv2.THRESH_BINARY)
+                    images.append(th)
                 elif k is ord('q'):
                     break
 

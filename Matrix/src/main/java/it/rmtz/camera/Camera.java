@@ -2,6 +2,7 @@ package it.rmtz.camera;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.opencv.core.Core;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
@@ -83,6 +84,10 @@ public class Camera {
         return cap.open(i);
     }
 
+    public boolean isOpened() {
+        return cap.isOpened();
+    }
+
     public void close() {
         cap.release();
     }
@@ -96,6 +101,7 @@ public class Camera {
             return null;
         }
         if (!cap.read(frame)) throw new IOException("Camera may be disconnected");
+        Core.rotate(frame, frame, Core.ROTATE_180);
         return frame;
     }
 }
