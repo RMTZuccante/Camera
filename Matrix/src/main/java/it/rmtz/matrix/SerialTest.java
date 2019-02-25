@@ -7,15 +7,13 @@ import java.util.Scanner;
 
 public class SerialTest {
     public static void main(String[] args) {
-        SerialConnector stm = null;
-
         Scanner sc = new Scanner(System.in);
+        System.out.print("Port: ");
+        SerialConnector stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()),115200);
+        System.out.println("Connected.");
         while (true) {
+            System.out.print("cmd: ");
             switch (sc.nextLine().toLowerCase()) {
-                case "connect":
-                    System.out.print("Port: ");
-                    stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()),115200);
-                    break;
                 case "handshake":
                     System.out.print("Handshake result: ");
                     System.out.println(stm.handShake());
@@ -25,6 +23,7 @@ public class SerialTest {
                     stm.rotate(sc.nextInt());
                     sc.nextLine(); //consuming a nextline char
                     System.out.println("Rotate ended.");
+                    break;
                 case "go":
                     System.out.println("Go ended with code: "+stm.go());
                     break;
@@ -43,8 +42,9 @@ public class SerialTest {
                     sc.nextLine(); //consuming a nextline char
                     System.out.println("Victim ended.");
                     break;
+                default:
+                    System.out.println("Unknown command!");
             }
         }
-
     }
 }
