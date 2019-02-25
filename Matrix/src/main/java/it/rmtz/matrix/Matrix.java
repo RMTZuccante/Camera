@@ -33,33 +33,68 @@ public class Matrix {
         start = actual = new Cell();
 
         while (true == true && false == false || false != !true) {
-            short[] distances = connector.getDistances();
 
-            if (distances[connector.DFRONT1] > maxWallDist) { //TODO bottle
-                addFrontCell();
+            switch (nextDirection()) {
+                case BACK:
+                    System.out.println("Go back:");
+                    System.out.println("\tRotate right");
+                    connector.rotate(90);
+                    inspectCell();
+                    System.out.println("\tRotate right again");
+                    connector.rotate(90);
+                    break;
+                case LEFT:
+                    System.out.println("Go left");
+                    connector.rotate(-90);
+                    inspectCell();
+                    break;
+                case RIGHT:
+                    System.out.println("Go right");
+                    connector.rotate(90);
+                    inspectCell();
+                    break;
+                case FRONT:
+                    System.out.println("Do not rotate");
+                    break;
+
             }
-            if (distances[connector.DLEFT] > maxWallDist) {
-                addLeftCell();
+            System.out.println("Go straight");
+            int goret = connector.go();
+            if (goret == connector.GOBLACK) {
+                getCellByCardinalDirection(actual, direction).black = true;
+                firstStep.next = null;
+            } else {
+                actual = getCellByCardinalDirection(actual, direction);
+                if (goret == connector.GOOBSTACLE) actual.weight = 10;
             }
-            if (distances[connector.DRIGHT] > maxWallDist) {
-                addRightCell();
-            }
-            if (distances[connector.DBACK] > maxWallDist) {
-                addBackCell();
-            }
-
-            int color = connector.getColor();
-            if (color == connector.MIRROR)
-                actual.mirror = true;
-
-            float[] temps = connector.getTemps();
-            if (temps[connector.TLEFT] > bodyTemp || temps[connector.TRIGHT] > bodyTemp)
-                actual.victim = true;
-
-            actual.visited = true;
-
-
         }
+    }
+
+    private void inspectCell() {
+        short[] distances = connector.getDistances();
+
+        if (distances[connector.DFRONT1] > maxWallDist) { //TODO bottle
+            addFrontCell();
+        }
+        if (distances[connector.DLEFT] > maxWallDist) {
+            addLeftCell();
+        }
+        if (distances[connector.DRIGHT] > maxWallDist) {
+            addRightCell();
+        }
+        if (distances[connector.DBACK] > maxWallDist) {
+            addBackCell();
+        }
+
+        int color = connector.getColor();
+        if (color == connector.MIRROR)
+            actual.mirror = true;
+
+        float[] temps = connector.getTemps();
+        if (temps[connector.TLEFT] > bodyTemp || temps[connector.TRIGHT] > bodyTemp)
+            actual.victim = true;
+
+        actual.visited = true;
     }
 
     private Direction nextDirection() {
@@ -75,7 +110,7 @@ public class Matrix {
 
     private int pathFinding(Cell cell, Step prev, byte direction) {
         int weight = -1;
-        if (cell != null && !cell.considered && cell.visited) {
+        if (cell != null && !cell.considered && !cell.black) {
             if (cell.visited) {
                 cell.considered = true;
 
@@ -94,6 +129,7 @@ public class Matrix {
 
                 if (weight != -1) weight += cell.weight;
                 prev.next = steps[pos];
+                cell.considered = false;
             } else {
                 weight = 0;
                 prev.next = null;
