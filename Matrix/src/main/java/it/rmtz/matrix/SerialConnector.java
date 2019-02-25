@@ -23,7 +23,7 @@ public class SerialConnector extends MatrixConnector {
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
 
-    public SerialConnector(SerialPort stm, int baudRate) {
+    SerialConnector(SerialPort stm, int baudRate) {
         this.stm = stm;
         /*Try opening port*/
         stm.setBaudRate(baudRate);
@@ -83,20 +83,20 @@ public class SerialConnector extends MatrixConnector {
     }
 
     void rotate(int angle, boolean right) {
+        disableEvents();
         buffer[0] = ROTATE;
-        buffer[1] = (byte) (right?1:0);
+        buffer[1] = (byte) (right?0:1);
         buffer[2] = (byte) angle;
         stm.writeBytes(buffer, 3);
-        disableEvents();
         stm.readBytes(buffer, 1);
         enableEvents();
     }
 
     @Override
     int go() {
+        disableEvents();
         buffer[0] = GO;
         stm.writeBytes(buffer,1);
-        disableEvents();
         stm.readBytes(buffer,1);
         enableEvents();
         return buffer[0];
@@ -104,21 +104,21 @@ public class SerialConnector extends MatrixConnector {
 
     @Override
     void victim(int packets) {
+        disableEvents();
         buffer[0] = VICTIM;
         buffer[1] = (byte) packets;
         stm.writeBytes(buffer,2);
-        disableEvents();
         stm.readBytes(buffer,1);
         enableEvents();
     }
 
     @Override
     short[] getDistances() {
+        disableEvents();
         int length = 2;
         int num = 5;
         buffer[0] = GETDISTANCES;
         stm.writeBytes(buffer, 1);
-        disableEvents();
         stm.readBytes(buffer, length*num);
         enableEvents();
         short[] arr = new short[num];
@@ -128,9 +128,9 @@ public class SerialConnector extends MatrixConnector {
 
     @Override
     int getColor() {
+        disableEvents();
         buffer[0] = GETCOLOR;
         stm.writeBytes(buffer,1);
-        disableEvents();
         stm.readBytes(buffer,1);
         enableEvents();
         return buffer[0];
@@ -140,9 +140,9 @@ public class SerialConnector extends MatrixConnector {
     float[] getTemps() {
         int length = 4;
         int num = 2;
+        disableEvents();
         buffer[0] = GETTEMPS;
         stm.writeBytes(buffer,1);
-        disableEvents();
         stm.readBytes(buffer, length*num);
         enableEvents();
         float[] arr = new float[num];
@@ -150,7 +150,6 @@ public class SerialConnector extends MatrixConnector {
         return arr;
     }
 
-    @Override
     void waitForReady() {
         buffer[0] = 0;
         while(buffer[0]!= READY) stm.readBytes(buffer,1);
@@ -160,4 +159,3 @@ public class SerialConnector extends MatrixConnector {
         return "Port: "+stm.getSystemPortName() + "\nBaud: "+stm.getBaudRate();
     }
 }
-
