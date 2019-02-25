@@ -12,7 +12,7 @@ import java.nio.ByteOrder;
  */
 
 public class SerialConnector extends MatrixConnector {
-    final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7;
+    final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, READY = 8;
     byte[] buffer = new byte[10];
 
     int DFRONT1 = 0, DFRONT2 = 1, DRIGHT = 3, DLEFT = 4, DBACK = 5;
@@ -33,7 +33,6 @@ public class SerialConnector extends MatrixConnector {
         }
         /*Set port read to blocking, 0 = unlimited timeout, see https://github.com/Fazecast/jSerialComm/wiki/Blocking-and-Semiblocking-Reading-Usage-Example*/
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-        enableEvents();
     }
 
     SerialPortDataListener listener = new SerialPortDataListener() {
@@ -44,7 +43,7 @@ public class SerialConnector extends MatrixConnector {
 
         @Override
         public void serialEvent(SerialPortEvent event) {
-            System.out.println(new String(event.getReceivedData()));
+            System.out.print(new String(event.getReceivedData()));
         }
     };
 
@@ -66,11 +65,11 @@ public class SerialConnector extends MatrixConnector {
         buffer[0] = HANDSHAkE;
         buffer[1] = n;
         stm.writeBytes(buffer, 2);
-        disableEvents();
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-        enableEvents();
-        return recv == 1 && buffer[0] == (byte) (n * 2);
+        boolean success = recv == 1 && buffer[0] == (byte) (n * 2);
+        if(success) enableEvents();
+        return success;
     }
 
     @Override
@@ -151,7 +150,13 @@ public class SerialConnector extends MatrixConnector {
         return arr;
     }
 
+    void waitForReady() {
+        buffer[0] = 0;
+        while(buffer[0]!= READY) stm.readBytes(buffer,1);
+    }
+
     String getConnectionInfo() {
         return "Port: "+stm.getSystemPortName() + "\nBaud: "+stm.getBaudRate();
     }
 }
+
