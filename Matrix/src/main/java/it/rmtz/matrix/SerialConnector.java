@@ -1,6 +1,8 @@
 package it.rmtz.matrix;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortEvent;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -31,6 +33,27 @@ public class SerialConnector extends MatrixConnector {
         }
         /*Set port read to blocking, 0 = unlimited timeout, see https://github.com/Fazecast/jSerialComm/wiki/Blocking-and-Semiblocking-Reading-Usage-Example*/
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+        enableEvents();
+    }
+
+    SerialPortDataListener listener = new SerialPortDataListener() {
+        @Override
+        public int getListeningEvents() {
+            return SerialPort.LISTENING_EVENT_DATA_RECEIVED;
+        }
+
+        @Override
+        public void serialEvent(SerialPortEvent event) {
+            System.out.println(new String(event.getReceivedData()));
+        }
+    };
+
+    void enableEvents() {
+        stm.addDataListener(listener);
+    }
+
+    void disableEvents() {
+        stm.removeDataListener();
     }
 
     @Override
@@ -43,8 +66,10 @@ public class SerialConnector extends MatrixConnector {
         buffer[0] = HANDSHAkE;
         buffer[1] = n;
         stm.writeBytes(buffer, 2);
+        disableEvents();
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+        enableEvents();
         return recv == 1 && buffer[0] == (byte) (n * 2);
     }
 
@@ -63,14 +88,18 @@ public class SerialConnector extends MatrixConnector {
         buffer[1] = (byte) (right?1:0);
         buffer[2] = (byte) angle;
         stm.writeBytes(buffer, 3);
+        disableEvents();
         stm.readBytes(buffer, 1);
+        enableEvents();
     }
 
     @Override
     int go() {
         buffer[0] = GO;
         stm.writeBytes(buffer,1);
+        disableEvents();
         stm.readBytes(buffer,1);
+        enableEvents();
         return buffer[0];
     }
 
@@ -79,7 +108,9 @@ public class SerialConnector extends MatrixConnector {
         buffer[0] = VICTIM;
         buffer[1] = (byte) packets;
         stm.writeBytes(buffer,2);
+        disableEvents();
         stm.readBytes(buffer,1);
+        enableEvents();
     }
 
     @Override
@@ -88,7 +119,9 @@ public class SerialConnector extends MatrixConnector {
         int num = 5;
         buffer[0] = GETDISTANCES;
         stm.writeBytes(buffer, 1);
+        disableEvents();
         stm.readBytes(buffer, length*num);
+        enableEvents();
         short[] arr = new short[num];
         for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getShort();
         return arr;
@@ -98,7 +131,9 @@ public class SerialConnector extends MatrixConnector {
     int getColor() {
         buffer[0] = GETCOLOR;
         stm.writeBytes(buffer,1);
+        disableEvents();
         stm.readBytes(buffer,1);
+        enableEvents();
         return buffer[0];
     }
 
@@ -108,7 +143,9 @@ public class SerialConnector extends MatrixConnector {
         int num = 2;
         buffer[0] = GETTEMPS;
         stm.writeBytes(buffer,1);
+        disableEvents();
         stm.readBytes(buffer, length*num);
+        enableEvents();
         float[] arr = new float[num];
         for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         return arr;
