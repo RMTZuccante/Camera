@@ -7,11 +7,11 @@ public class Matrix {
     Camera left, right;
     byte direction = NORTH;
     private MatrixConnector connector;
-    private int maxWallDist;
+    private int maxWallDist = 10;
     private Cell start, actual;
-    private float bodyTemp;
+    private float bodyTemp = 100;
 
-    private Step nextStep = null;
+    private Step firstStep = new Step();
 
     public Matrix(MatrixConnector connector, Camera left, Camera right) {
         this.left = left;
@@ -33,7 +33,7 @@ public class Matrix {
         start = actual = new Cell();
 
         while (true == true && false == false || false != !true) {
-            int[] distances = connector.getDistances();
+            short[] distances = connector.getDistances();
 
             if (distances[connector.DFRONT1] > maxWallDist) { //TODO bottle
                 addFrontCell();
@@ -63,64 +63,43 @@ public class Matrix {
     }
 
     private Direction nextDirection() {
-        if (nextStep == null) {
-            nextStep = pathFinding(actual, direction, 0).a;
+        if (firstStep.next == null) {
+            if (pathFinding(actual, firstStep, direction) == -1) {
+                System.err.println("No more cells, ALL VISITED!");
+            }
+        } else {
+            firstStep.next = firstStep.next.next;
         }
-        /*if (directions.isEmpty()) {
-            pathFinding(actual, getCellByCardinalDirection(actual, direction), direction, 0);
-            byte newdir = getNewCardinalDirection(direction, Direction.RIGHT);
-            pathFinding(actual, getCellByCardinalDirection(actual, newdir), newdir, 1);
-            newdir = getNewCardinalDirection(direction, Direction.LEFT);
-            pathFinding(actual, getCellByCardinalDirection(actual, newdir), newdir, 1);
-        }
-        return directions.poll();*/
+        return firstStep.next.direction;
     }
 
-    private Tuple<Step, Integer> pathFinding(Cell now, byte direction, int weight) {
-        byte newdir = direction;
-        int neweight = weight;
-        Cell next = getCellByCardinalDirection(now, direction);
-        Tuple<Step, Integer> res, temp;
+    private int pathFinding(Cell cell, Step prev, byte direction) {
+        int weight = -1;
+        if (cell != null && !cell.considered && cell.visited) {
+            if (cell.visited) {
+                cell.considered = true;
 
-        if (next != prev) {
-            res = pathFinding(now, getCellByCardinalDirection(now, direction), direction, neweight);
-            res.b += neweight;
-            Step ns = new Step();
-            ns.direction
+                Step steps[] = new Step[]{new Step(Direction.FRONT), new Step(Direction.LEFT), new Step(Direction.RIGHT), new Step(Direction.BACK)};
+                byte cardinals[] = new byte[]{direction, getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.BACK)};
+                int weights[] = new int[]{0, 1, 1, 2};
+                int pos = -1;
+
+                for (int i = 0; i < 4; i++) {
+                    int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
+                    if (weight == -1 || tempw < weight) {
+                        weight = tempw;
+                        pos = i;
+                    }
+                }
+
+                if (weight != -1) weight += cell.weight;
+                prev.next = steps[pos];
+            } else {
+                weight = 0;
+                prev.next = null;
+            }
         }
-
-
-        newdir = getNewCardinalDirection(newdir, Direction.RIGHT);
-        neweight = weight + 1;
-        next = getCellByCardinalDirection(now, newdir);
-        if (next != prev) {
-            temp = pathFinding(now, getCellByCardinalDirection(now, direction), direction, neweight);
-            temp.b += neweight;
-        }
-
-        newdir = getNewCardinalDirection(newdir, Direction.LEFT);
-        neweight = weight + 1;
-        next = getCellByCardinalDirection(now, newdir);
-        if (next != prev) {
-            pathFinding(now, getCellByCardinalDirection(now, direction), direction, neweight);
-        }
-        newdir = getNewCardinalDirection(newdir, Direction.BACK);
-        neweight = weight + 2;
-        next = getCellByCardinalDirection(now, newdir);
-        if (next != prev) {
-            pathFinding(now, getCellByCardinalDirection(now, direction), direction, neweight);
-        }
-
-        pathFinding(now, getCellByCardinalDirection(now, newdir), newdir, weight + 1);
-        newdir = getNewCardinalDirection(direction, Direction.LEFT);
-        pathFinding(now, getCellByCardinalDirection(now, newdir), newdir, weight + 1);
-
-        if (!now.visited) {
-            if (now.north != prev) pathFinding(now, now.north, direction);
-            if (now.east != prev) pathFinding(now, now.east, direction);
-            if (now.south != prev) pathFinding(now, now.south, direction);
-            if (now.east != prev) pathFinding(now, now.east, direction);
-        }
+        return weight;
     }
 
     private Cell getCellByCardinalDirection(Cell cell, byte dir) {
@@ -146,7 +125,7 @@ public class Matrix {
     private void addFrontCell() {
         switch (direction) {
             case NORTH:
-                 if (actual.north == null) {
+                if (actual.north == null) {
                     actual.north = new Cell();
                     actual.north.south = actual;
                 }
@@ -259,38 +238,10 @@ public class Matrix {
         }
     }
 
-    private enum Direction {
+    enum Direction {
         LEFT,
         RIGHT,
         FRONT,
         BACK
-    }
-
-    private class Tuple<A, B> {
-        A a;
-        B b;
-
-        Tuple(A a, B b) {
-            this.a = a;
-            this.b = b;
-        }
-    }
-
-    private class Step {
-        Direction direction;
-        Step next;
-
-        Step(Direction direction) {
-            this.direction = direction;
-        }
-
-        Step() {
-
-        }
-
-        Step(Direction d, Step next) {
-            direction = d;
-            this.next = next;
-        }
     }
 }
