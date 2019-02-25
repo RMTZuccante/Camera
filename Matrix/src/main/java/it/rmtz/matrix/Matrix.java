@@ -6,14 +6,14 @@ public class Matrix {
     final byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     Camera left, right;
     byte direction = NORTH;
-    private MatrixConnector connector;
-    private int maxWallDist = 10;
+    private SerialConnector connector;
+    private int maxWallDist = 100;
     private Cell start, actual;
     private float bodyTemp = 100;
 
     private Step firstStep = new Step();
 
-    public Matrix(MatrixConnector connector, Camera left, Camera right) {
+    public Matrix(SerialConnector connector, Camera left, Camera right) {
         this.left = left;
         this.right = right;
         this.connector = connector;
@@ -30,10 +30,12 @@ public class Matrix {
             }
         }
 
+        connector.waitForReady();
+
         start = actual = new Cell();
 
         while (true == true && false == false || false != !true) {
-
+            inspectCell();
             switch (nextDirection()) {
                 case BACK:
                     System.out.println("Go back:");
@@ -67,13 +69,14 @@ public class Matrix {
                 actual = getCellByCardinalDirection(actual, direction);
                 if (goret == connector.GOOBSTACLE) actual.weight = 10;
             }
+            System.out.println("Done");
         }
     }
 
     private void inspectCell() {
         short[] distances = connector.getDistances();
 
-        if (distances[connector.DFRONT1] > maxWallDist) { //TODO bottle
+        if (distances[connector.DFRONTL] > maxWallDist) { //TODO bottle
             addFrontCell();
         }
         if (distances[connector.DLEFT] > maxWallDist) {
@@ -122,7 +125,7 @@ public class Matrix {
                 for (int i = 0; i < 4; i++) {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
                     if (weight == -1 || tempw < weight) {
-                        weight = tempw;
+                        weight = tempw + weights[i];
                         pos = i;
                     }
                 }
@@ -149,9 +152,9 @@ public class Matrix {
 
     private byte getNewCardinalDirection(byte start, Direction rot) {
         if (rot == Direction.LEFT) {
-            start++;
-        } else if (rot == Direction.RIGHT) {
             start--;
+        } else if (rot == Direction.RIGHT) {
+            start++;
         } else if (rot == Direction.BACK) {
             start += 2;
         }

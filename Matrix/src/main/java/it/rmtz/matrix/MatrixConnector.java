@@ -6,12 +6,9 @@ package it.rmtz.matrix;
 
 public abstract class MatrixConnector {
 
-    int DFRONT1, DFRONT2, DRIGHT, DLEFT, DBACK; //Indexes of response of getDistances
-    int MIRROR, WHITE; //Values returned by getColor
-    int TLEFT, TRIGHT; //Indexes of response of getTemps
-    int GOBLACK, GOOBSTACLE; //Values returned by go
-
     abstract boolean handShake();
+
+    abstract void waitForReady();
 
     abstract void rotate(int angle);
 

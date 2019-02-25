@@ -15,15 +15,15 @@ public class SerialConnector extends MatrixConnector {
     final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, READY = 8;
     byte[] buffer = new byte[10];
 
-    int DFRONT1 = 0, DFRONT2 = 1, DRIGHT = 3, DLEFT = 4, DBACK = 5;
+    int DFRONTL = 0, DFRONTR = 1, DRIGHT = 3, DLEFT = 2, DBACK = 4;
     int MIRROR = 1, WHITE = 0;
-    int TLEFT = 0, TRIGHT = 0;
+    int TLEFT = 0, TRIGHT = 1;
     int GOBLACK = 1, GOOBSTACLE = 2;
 
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
 
-    SerialConnector(SerialPort stm, int baudRate) {
+    public SerialConnector(SerialPort stm, int baudRate) {
         this.stm = stm;
         /*Try opening port*/
         stm.setBaudRate(baudRate);
@@ -150,6 +150,7 @@ public class SerialConnector extends MatrixConnector {
         return arr;
     }
 
+    @Override
     void waitForReady() {
         buffer[0] = 0;
         while(buffer[0]!= READY) stm.readBytes(buffer,1);

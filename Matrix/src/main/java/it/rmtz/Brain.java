@@ -1,11 +1,13 @@
 package it.rmtz;
 
+import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
 import it.rmtz.matrix.Matrix;
+import it.rmtz.matrix.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 
@@ -23,7 +25,7 @@ public class Brain {
         JsonObject config = null;
         Camera left = null, right = null;
 
-        String lp = null;
+        /*String lp = null;
         String modelpath = "./model/model.dl4j";
         if (args != null && args.length > 0) {
             int i = 0;
@@ -81,7 +83,7 @@ public class Brain {
             }
         } else {
             System.err.println("Error loading config.json");
-        }
+        }*/
 
         /*while (true) {
             try {
@@ -97,7 +99,9 @@ public class Brain {
             }
         }*/
         System.out.println("Ready to start");
-        Matrix m = new Matrix(left, right);
+        SerialConnector c = new SerialConnector(SerialPort.getCommPort("/dev/cu.usbmodem14101"),115200);
+        Matrix m = new Matrix(c, left, right);
+        m.start();
     }
 
     private static boolean getValuesFromJson(JsonObject obj) {
