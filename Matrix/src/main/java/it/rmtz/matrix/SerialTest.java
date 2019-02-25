@@ -17,17 +17,14 @@ public class SerialTest {
             System.out.print("Port: ");
             stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()), 115200);
         }
+        System.out.println("Port opened.");
+        while(!stm.handShake()) System.out.println("Trying handshake...");
         System.out.println("Connected!");
         System.out.println(stm.getConnectionInfo());
         System.out.println();
 
         while (true) {
-            System.out.print("cmd: ");
             switch (sc.nextLine().toLowerCase()) {
-                case "handshake":
-                    System.out.print("Handshake result: ");
-                    System.out.println(stm.handShake());
-                    break;
                 case "rotate":
                     System.out.print("Angle: ");
                     stm.rotate(sc.nextInt());
