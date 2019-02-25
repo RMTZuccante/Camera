@@ -113,4 +113,8 @@ public class SerialConnector extends MatrixConnector {
         for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         return arr;
     }
+
+    String getConnectionInfo() {
+        return "Port: "+stm.getSystemPortName() + "\nBaud: "+stm.getBaudRate();
+    }
 }

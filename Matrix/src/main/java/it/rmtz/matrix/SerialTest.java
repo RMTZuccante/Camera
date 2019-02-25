@@ -8,9 +8,19 @@ import java.util.Scanner;
 public class SerialTest {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        System.out.print("Port: ");
-        SerialConnector stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()),115200);
-        System.out.println("Connected.");
+        SerialConnector stm;
+
+        if(args.length > 0) {
+            stm = new SerialConnector(SerialPort.getCommPort(args[0]), 115200);
+        }
+        else {
+            System.out.print("Port: ");
+            stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()), 115200);
+        }
+        System.out.println("Connected!");
+        System.out.println(stm.getConnectionInfo());
+        System.out.println();
+
         while (true) {
             System.out.print("cmd: ");
             switch (sc.nextLine().toLowerCase()) {
@@ -42,8 +52,15 @@ public class SerialTest {
                     sc.nextLine(); //consuming a nextline char
                     System.out.println("Victim ended.");
                     break;
+                case "getconnectioninfo":
+                    System.out.println(stm.getConnectionInfo());
+                    break;
+                case "exit":
+                    System.exit(0);
+                    break;
                 default:
                     System.out.println("Unknown command!");
+                    break;
             }
         }
     }
