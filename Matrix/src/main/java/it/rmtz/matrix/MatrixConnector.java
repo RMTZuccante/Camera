@@ -18,8 +18,8 @@ public abstract class MatrixConnector {
     abstract int go();
 
     abstract void victim(int packets);
-
-    abstract int[] getDistances();
+    
+    abstract short[] getDistances();
 
     abstract int getColor();
 
