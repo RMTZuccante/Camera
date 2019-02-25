@@ -7,15 +7,23 @@ import java.util.Scanner;
 
 public class SerialTest {
     public static void main(String[] args) {
-        SerialConnector stm = null;
-
         Scanner sc = new Scanner(System.in);
+        SerialConnector stm;
+
+        if(args.length > 0) {
+            stm = new SerialConnector(SerialPort.getCommPort(args[0]), 115200);
+        }
+        else {
+            System.out.print("Port: ");
+            stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()), 115200);
+        }
+        System.out.println("Connected!");
+        System.out.println(stm.getConnectionInfo());
+        System.out.println();
+
         while (true) {
+            System.out.print("cmd: ");
             switch (sc.nextLine().toLowerCase()) {
-                case "connect":
-                    System.out.print("Port: ");
-                    stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()),115200);
-                    break;
                 case "handshake":
                     System.out.print("Handshake result: ");
                     System.out.println(stm.handShake());
@@ -25,6 +33,7 @@ public class SerialTest {
                     stm.rotate(sc.nextInt());
                     sc.nextLine(); //consuming a nextline char
                     System.out.println("Rotate ended.");
+                    break;
                 case "go":
                     System.out.println("Go ended with code: "+stm.go());
                     break;
@@ -43,8 +52,16 @@ public class SerialTest {
                     sc.nextLine(); //consuming a nextline char
                     System.out.println("Victim ended.");
                     break;
+                case "getconnectioninfo":
+                    System.out.println(stm.getConnectionInfo());
+                    break;
+                case "exit":
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Unknown command!");
+                    break;
             }
         }
-
     }
 }

@@ -83,14 +83,14 @@ public class SerialConnector extends MatrixConnector {
     }
 
     @Override
-    int[] getDistances() {
+    short[] getDistances() {
         int length = 2;
         int num = 5;
         buffer[0] = GETDISTANCES;
         stm.writeBytes(buffer, 1);
         stm.readBytes(buffer, length*num);
-        int[] arr = new int[num];
-        for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        short[] arr = new short[num];
+        for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getShort();
         return arr;
     }
 
@@ -112,5 +112,9 @@ public class SerialConnector extends MatrixConnector {
         float[] arr = new float[num];
         for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length*i,length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         return arr;
+    }
+
+    String getConnectionInfo() {
+        return "Port: "+stm.getSystemPortName() + "\nBaud: "+stm.getBaudRate();
     }
 }
