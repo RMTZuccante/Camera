@@ -34,42 +34,54 @@ public class Matrix {
 
         start = actual = new Cell();
 
-        while (true == true && false == false || false != !true) {
+        while (true) {
             inspectCell();
-            switch (nextDirection()) {
-                case BACK:
-                    System.out.println("Go back:");
-                    System.out.println("\tRotate right");
-                    connector.rotate(90);
-                    inspectCell();
-                    System.out.println("\tRotate right again");
-                    connector.rotate(90);
-                    break;
-                case LEFT:
-                    System.out.println("Go left");
-                    connector.rotate(-90);
-                    inspectCell();
-                    break;
-                case RIGHT:
-                    System.out.println("Go right");
-                    connector.rotate(90);
-                    inspectCell();
-                    break;
-                case FRONT:
-                    System.out.println("Do not rotate");
-                    break;
+            Direction dir = nextDirection();
+            if (dir != null) {
+                switch (dir) {
+                    case BACK:
+                        System.out.println("Go back:");
+                        System.out.println("\tRotate right");
+                        connector.rotate(90);
+                        inspectCell();
+                        System.out.println("\tRotate right again");
+                        connector.rotate(90);
+                        break;
+                    case LEFT:
+                        System.out.println("Go left");
+                        connector.rotate(-90);
+                        inspectCell();
+                        break;
+                    case RIGHT:
+                        System.out.println("Go right");
+                        connector.rotate(90);
+                        inspectCell();
+                        break;
+                    case FRONT:
+                        System.out.println("Do not rotate");
+                        break;
 
-            }
-            System.out.println("Go straight");
-            int goret = connector.go();
-            if (goret == connector.GOBLACK) {
-                getCellByCardinalDirection(actual, direction).black = true;
-                firstStep.next = null;
+                }
+
+                if (actual.victim) {
+                    connector.victim(1);
+                }
+
+
+                System.out.println("Go straight");
+                int goret = connector.go();
+                if (goret == connector.GOBLACK) {
+                    getCellByCardinalDirection(actual, direction).black = true;
+                    firstStep.next = null;
+                } else {
+                    direction = getNewCardinalDirection(direction, dir);
+                    actual = getCellByCardinalDirection(actual, direction);
+                    if (goret == connector.GOOBSTACLE) actual.weight = 10;
+                }
             } else {
-                actual = getCellByCardinalDirection(actual, direction);
-                if (goret == connector.GOOBSTACLE) actual.weight = 10;
+                System.out.println("Finished! MISSION COMPLETED!");
+                break;
             }
-            System.out.println("Done");
         }
     }
 
@@ -101,14 +113,25 @@ public class Matrix {
     }
 
     private Direction nextDirection() {
+        Direction dir = null;
+        boolean gotNewDir = false;
         if (firstStep.next == null) {
             if (pathFinding(actual, firstStep, direction) == -1) {
-                System.err.println("No more cells, ALL VISITED!");
-            }
-        } else {
+                if (actual != start) {
+                    System.err.println("No more cells, ALL VISITED!, going back to home");
+                    start.visited = false;
+                    if (pathFinding(actual, firstStep, direction) == -1) {
+                        System.err.println("Failed pathfinding to home! ERROR!");
+                    } else gotNewDir = true;
+                }
+            } else gotNewDir = true;
+        } else gotNewDir = true;
+
+        if (gotNewDir) {
+            dir = firstStep.next.direction;
             firstStep.next = firstStep.next.next;
         }
-        return firstStep.next.direction;
+        return dir;
     }
 
     private int pathFinding(Cell cell, Step prev, byte direction) {
@@ -117,21 +140,26 @@ public class Matrix {
             if (cell.visited) {
                 cell.considered = true;
 
-                Step steps[] = new Step[]{new Step(Direction.FRONT), new Step(Direction.LEFT), new Step(Direction.RIGHT), new Step(Direction.BACK)};
-                byte cardinals[] = new byte[]{direction, getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.BACK)};
+                Step steps[] = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)};
+                byte cardinals[] = new byte[]{direction, getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.BACK)};
                 int weights[] = new int[]{0, 1, 1, 2};
                 int pos = -1;
 
                 for (int i = 0; i < 4; i++) {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
-                    if (weight == -1 || tempw < weight) {
-                        weight = tempw + weights[i];
-                        pos = i;
+                    if (tempw != -1) {
+                        tempw += weights[i];
+                        if (weight == -1 || tempw < weight) {
+                            weight = tempw;
+                            pos = i;
+                        }
                     }
                 }
 
-                if (weight != -1) weight += cell.weight;
-                prev.next = steps[pos];
+                if (weight != -1) {
+                    weight += cell.weight;
+                    prev.next = steps[pos];
+                }
                 cell.considered = false;
             } else {
                 weight = 0;
