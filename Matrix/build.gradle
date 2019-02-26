@@ -20,6 +20,14 @@ task fatJar(type: Jar) {
     with jar
 }
 
+task serialTestFatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'it.rmtz.matrix.SerialTest'
+    }
+    baseName = "SerialTest"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
