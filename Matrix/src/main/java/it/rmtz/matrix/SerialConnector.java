@@ -23,7 +23,7 @@ public class SerialConnector extends MatrixConnector {
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
 
-    SerialConnector(SerialPort stm, int baudRate) {
+    public SerialConnector(SerialPort stm, int baudRate) {
         this.stm = stm;
         /*Try opening port*/
         stm.setBaudRate(baudRate);

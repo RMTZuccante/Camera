@@ -3,18 +3,9 @@ package it.rmtz;
 import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
 import it.rmtz.matrix.Matrix;
 import it.rmtz.matrix.SerialConnector;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.util.ModelSerializer;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 
 public class Brain {
     private static int cl, cr, thresh, minArea, maxAra, offset;
