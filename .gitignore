@@ -1,3 +1,7 @@
-/.idea
-/cmake-build-debug
+.idea/
+.gradle/
+build/
+out/
+gradle/
+make-build-debug
 /train/__pycache__
