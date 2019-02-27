@@ -103,7 +103,6 @@ public class SerialConnector {
     }
 
     synchronized void rotate(int angle, boolean right) {
-        disableEvents();
         buffer[0] = ROTATE;
         buffer[1] = (byte) (right ? 0 : 1);
         buffer[2] = (byte) angle;
@@ -116,7 +115,6 @@ public class SerialConnector {
     }
 
     synchronized int go() {
-        disableEvents();
         buffer[0] = GO;
         stm.writeBytes(buffer,1);
         try {
