@@ -11,7 +11,7 @@ import java.nio.ByteOrder;
  * Created by Nicolò Tagliaferro
  */
 
-public class SerialConnector extends MatrixConnector {
+public class SerialConnector {
     final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7;
     final byte STX = 2, ETX = 3, RES = -128, READY = 8;
     byte[] buffer = new byte[10];
