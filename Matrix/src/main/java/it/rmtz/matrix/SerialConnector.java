@@ -49,14 +49,15 @@ public class SerialConnector {
             @Override
             public void serialEvent(SerialPortEvent event) {
                 byte[] buf = new byte[1];
-                stm.readBytes(buf,1);
 
-                synchronized (serialConnector) {
+                while (stm.bytesAvailable() > 0) {
+                    stm.readBytes(buf, 1);
                     if (buf[0] == READY) {
                         ready = true;
-                        serialConnector.notify();
-                    }
-                    if (buf[0] == STX) {
+                        synchronized (serialConnector) {
+                            serialConnector.notify();
+                        }
+                    } else if (buf[0] == STX) {
                         stm.readBytes(buf, 1);
                         StringBuilder toPrint = new StringBuilder();
                         while (buf[0] != ETX) {
@@ -66,8 +67,11 @@ public class SerialConnector {
                         System.out.print(toPrint);
                     } else if ((buf[0] & RES) == RES) {
                         result = (byte) (buf[0] ^ RES);
-                        serialConnector.notify();
+                        synchronized (serialConnector) {
+                            serialConnector.notify();
+                        }
                     }
+
                 }
             }
         });
