@@ -12,7 +12,7 @@ import java.nio.ByteOrder;
  */
 
 public class SerialConnector {
-    final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7;
+    final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8;
     final byte STX = 2, ETX = 3, RES = -128, READY = 8;
     byte[] buffer = new byte[10];
 
@@ -169,6 +169,12 @@ public class SerialConnector {
         float[] arr = new float[num];
         for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         return arr;
+    }
+
+    synchronized void setDebug(byte level) {
+        buffer[0] = SETDEBUG;
+        buffer[1] = level;
+        stm.writeBytes(buffer,2);
     }
 
     synchronized void waitForReady() {

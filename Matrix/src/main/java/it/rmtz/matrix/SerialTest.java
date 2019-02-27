@@ -51,6 +51,11 @@ public class SerialTest {
                     sc.nextLine(); //consuming a nextline char
                     System.out.println("Victim ended.");
                     break;
+                case "setdebug":
+                    System.out.println("Level number: ");
+                    sc.nextLine(); //consuming a nextline char
+                    stm.setDebug(sc.nextByte());
+                    break;
                 case "getconnectioninfo":
                     System.out.println(stm.getConnectionInfo());
                     break;
