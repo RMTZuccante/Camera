@@ -85,17 +85,20 @@ public class Brain {
             System.err.println("Error loading config.json");
         }
 
-        SerialPort[] ports = SerialPort.getCommPorts();
-        if (ports.length == 0) {
-            System.err.println("No serial port available!");
-            System.exit(1);
+        SerialPort stm = null;
+        for (SerialPort p : SerialPort.getCommPorts()) {
+            if (p.getDescriptivePortName().equals("Maple")) {
+                stm = p;
+                break;
+            }
         }
-        System.out.println(SerialPort.getCommPort("Maple").getSystemPortName());
-        for (SerialPort p : ports) {
-            System.out.println(p.getSystemPortName() + " has description " + p.getDescriptivePortName());
+
+        if (stm == null) {
+            System.err.println("Cannot find serial port connected to Maple");
         }
+
         System.out.println("Ready to start");
-        SerialConnector c = new SerialConnector(SerialPort.getCommPort("COM5"), 115200);
+        SerialConnector c = new SerialConnector(stm, 115200);
         Matrix m = new Matrix(c, left, right);
         m.start();
     }
