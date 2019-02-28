@@ -34,6 +34,8 @@ public class Matrix {
 
         connector.waitForReady();
 
+        connector.setDebug((byte)0);
+
         start = actual = new Cell();
 
         while (true) {
