@@ -38,7 +38,7 @@ public class SerialConnector {
         }
     }
 
-    void enableEvents() {
+    private void enableEvents() {
         SerialConnector serialConnector = this;
         stm.addDataListener(new SerialPortDataListener() {
             @Override
@@ -77,14 +77,14 @@ public class SerialConnector {
         });
     }
 
-    void disableEvents() {
+    private void disableEvents() {
         stm.removeDataListener();
     }
 
     /**
      * Send the HANDSHAKE command and a number, the expected response is 2 times the number
      */
-    synchronized boolean handShake() {
+    public synchronized boolean handShake() {
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
         byte n = 24;
         buffer[0] = HANDSHAkE;
@@ -93,11 +93,11 @@ public class SerialConnector {
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
         boolean success = recv == 1 && buffer[0] == (byte) (n * 2);
-        if(success) enableEvents();
+        if (success) enableEvents();
         return success;
     }
 
-    synchronized void rotate(int angle) {
+    public synchronized void rotate(int angle) {
         boolean rot = true;
         if (angle < 0) {
             rot = false;
@@ -106,7 +106,7 @@ public class SerialConnector {
         rotate(angle, rot);
     }
 
-    synchronized void rotate(int angle, boolean right) {
+    public synchronized void rotate(int angle, boolean right) {
         buffer[0] = ROTATE;
         buffer[1] = (byte) (right ? 0 : 1);
         buffer[2] = (byte) angle;
@@ -118,9 +118,9 @@ public class SerialConnector {
         }
     }
 
-    synchronized int go() {
+    public synchronized int go() {
         buffer[0] = GO;
-        stm.writeBytes(buffer,1);
+        stm.writeBytes(buffer, 1);
         try {
             wait();
         } catch (InterruptedException e) {
@@ -129,10 +129,10 @@ public class SerialConnector {
         return result;
     }
 
-    synchronized void victim(int packets) {
+    public synchronized void victim(int packets) {
         buffer[0] = VICTIM;
         buffer[1] = (byte) packets;
-        stm.writeBytes(buffer,2);
+        stm.writeBytes(buffer, 2);
         try {
             wait();
         } catch (InterruptedException e) {
@@ -140,7 +140,7 @@ public class SerialConnector {
         }
     }
 
-    synchronized short[] getDistances() {
+    public synchronized short[] getDistances() {
         disableEvents();
         int length = 2;
         int num = 5;
@@ -149,11 +149,12 @@ public class SerialConnector {
         stm.readBytes(buffer, length * num);
         enableEvents();
         short[] arr = new short[num];
-        for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getShort();
+        for (int i = 0; i < num; i++)
+            arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getShort();
         return arr;
     }
 
-    synchronized int getColor() {
+    public synchronized int getColor() {
         disableEvents();
         buffer[0] = GETCOLOR;
         stm.writeBytes(buffer, 1);
@@ -162,7 +163,7 @@ public class SerialConnector {
         return buffer[0];
     }
 
-    synchronized float[] getTemps() {
+    public synchronized float[] getTemps() {
         int length = 4;
         int num = 2;
         disableEvents();
@@ -171,17 +172,18 @@ public class SerialConnector {
         stm.readBytes(buffer, length * num);
         enableEvents();
         float[] arr = new float[num];
-        for (int i = 0; i < num; i++) arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+        for (int i = 0; i < num; i++)
+            arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         return arr;
     }
 
-    synchronized void setDebug(byte level) {
+    public synchronized void setDebug(byte level) {
         buffer[0] = SETDEBUG;
         buffer[1] = level;
-        stm.writeBytes(buffer,2);
+        stm.writeBytes(buffer, 2);
     }
 
-    synchronized void waitForReady() {
+    public synchronized void waitForReady() {
         while (!ready) {
             try {
                 wait();
@@ -191,7 +193,7 @@ public class SerialConnector {
         }
     }
 
-    String getConnectionInfo() {
+    public String getConnectionInfo() {
         return "Port: " + stm.getSystemPortName() + "\nBaud: " + stm.getBaudRate();
     }
 }

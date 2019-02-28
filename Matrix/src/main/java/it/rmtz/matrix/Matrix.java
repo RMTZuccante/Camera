@@ -13,7 +13,7 @@ public class Matrix {
 
     private Step firstStep = new Step();
 
-    public Matrix(SerialConnector connector, Camera left, Camera right, int maxWallDist, int bodyTemp) {
+    public Matrix(SerialConnector connector, Camera left, Camera right, int maxWallDist, float bodyTemp) {
         this.left = left;
         this.right = right;
         this.connector = connector;

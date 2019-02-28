@@ -17,7 +17,8 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Brain {
-    private static int cl, cr, thresh, minArea, maxAra, offset, bodytemp, distwall;
+    private static int cl, cr, thresh, minArea, maxAra, offset, distwall;
+    private static float bodytemp;
     private static char[] ref;
     private static double precision;
     private static String libpath;
@@ -74,6 +75,7 @@ public class Brain {
             }
         } else {
             System.err.println("Error loading config.json");
+            System.exit(-1);
         }
 
         stm = null;
@@ -116,7 +118,7 @@ public class Brain {
             offset = obj.get("OFFSET").getAsInt();
             precision = obj.get("PRECISION").getAsDouble();
             libpath = obj.get("LIBPATH").getAsString();
-            bodytemp = obj.get("BODYTEMP").getAsInt();
+            bodytemp = obj.get("BODYTEMP").getAsFloat();
             distwall = obj.get("DISTWALL").getAsInt();
         } catch (NullPointerException e) {
             return false;
