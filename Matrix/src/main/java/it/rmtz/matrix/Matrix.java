@@ -7,16 +7,18 @@ public class Matrix {
     Camera left, right;
     byte direction = NORTH;
     private SerialConnector connector;
-    private int maxWallDist = 100;
+    private int maxWallDist;
     private Cell start, actual;
-    private float bodyTemp = 100;
+    private float bodyTemp;
 
     private Step firstStep = new Step();
 
-    public Matrix(SerialConnector connector, Camera left, Camera right) {
+    public Matrix(SerialConnector connector, Camera left, Camera right, int maxWallDist, int bodyTemp) {
         this.left = left;
         this.right = right;
         this.connector = connector;
+        this.maxWallDist = maxWallDist;
+        this.bodyTemp = bodyTemp;
     }
 
     public void start() {

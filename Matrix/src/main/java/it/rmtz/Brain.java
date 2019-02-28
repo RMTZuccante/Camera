@@ -17,31 +17,22 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Brain {
-    private static int cl, cr, thresh, minArea, maxAra, offset;
+    private static int cl, cr, thresh, minArea, maxAra, offset, bodytemp, distwall;
     private static char[] ref;
     private static double precision;
+    private static String libpath;
+
+    private static SerialPort stm;
+
+    private static Thread shutdown = new Thread(() -> {
+        System.out.println("Closing serial port: " + (stm.closePort() ? "TRUE" : "FALSE"));
+    });
 
     public static void main(String[] args) {
         JsonObject config = null;
         Camera left = null, right = null;
 
-        String lp = null;
         String modelpath = "./model/model.dl4j";
-        if (args != null && args.length > 0) {
-            int i = 0;
-            try {
-                for (i = 0; i < args.length; i++) {
-                    if (args[i].equals("-lp")) {
-                        lp = args[++i];
-                    } else if (args[i].equals("-mp")) {
-                        modelpath = args[++i];
-                    }
-                }
-            } catch (IndexOutOfBoundsException e) {
-                System.err.println("Missing argument after [" + args[i - 1] + "]l");
-                System.exit(-1);
-            }
-        }
 
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
@@ -51,7 +42,7 @@ public class Brain {
         }
 
         if (getValuesFromJson(config)) {
-            if (Camera.loadLib(lp)) {
+            if (Camera.loadLib(libpath)) {
                 File f = new File(modelpath);
                 MultiLayerNetwork model = null;
                 if (f.exists() && f.canRead()) {
@@ -85,7 +76,7 @@ public class Brain {
             System.err.println("Error loading config.json");
         }
 
-        SerialPort stm = null;
+        stm = null;
         for (SerialPort p : SerialPort.getCommPorts()) {
             if (p.getDescriptivePortName().equals("Maple")) {
                 stm = p;
@@ -94,12 +85,19 @@ public class Brain {
         }
 
         if (stm == null) {
-            System.err.println("Cannot find serial port connected to Maple");
+            System.err.println("Cannot find serial port connected to Maple, trying with args");
+            if (args.length > 0) {
+                stm = SerialPort.getCommPort(args[0]);
+            } else {
+                System.err.println("No serial port provided");
+                System.exit(-1);
+            }
         }
 
         System.out.println("Ready to start");
         SerialConnector c = new SerialConnector(stm, 115200);
-        Matrix m = new Matrix(c, left, right);
+        Matrix m = new Matrix(c, left, right, distwall, bodytemp);
+        Runtime.getRuntime().addShutdownHook(shutdown);
         m.start();
     }
 
@@ -117,6 +115,9 @@ public class Brain {
             maxAra = obj.get("MAX_AREA").getAsInt();
             offset = obj.get("OFFSET").getAsInt();
             precision = obj.get("PRECISION").getAsDouble();
+            libpath = obj.get("LIBPATH").getAsString();
+            bodytemp = obj.get("BODYTEMP").getAsInt();
+            distwall = obj.get("DISTWALL").getAsInt();
         } catch (NullPointerException e) {
             return false;
         }
