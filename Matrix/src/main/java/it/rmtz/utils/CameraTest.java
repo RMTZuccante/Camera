@@ -1,22 +1,29 @@
-package it.rmtz;
+package it.rmtz.utils;
 
-import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
-import it.rmtz.matrix.Matrix;
-import it.rmtz.matrix.SerialConnector;
+import javafx.util.Pair;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.highgui.HighGui;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class Brain {
+/**
+ * Created by Nicolò Tagliaferro
+ */
+
+public class CameraTest {
     private static int cl, cr, thresh, minArea, maxAra, offset;
     private static char[] ref;
     private static double precision;
@@ -85,15 +92,40 @@ public class Brain {
             System.err.println("Error loading config.json");
         }
 
-        SerialPort[] ports = SerialPort.getCommPorts();
-        if (ports.length == 0) {
-            System.err.println("No serial port available!");
-            System.exit(1);
+        while (left.isOpened() || right.isOpened()) {
+            if (left.isOpened()) {
+                try {
+                    left.capture();
+                } catch (IOException e) {
+                    left.close();
+                    continue;
+                }
+                Pair<Character, Rect> a = left.getFrame().predictWithShape();
+                if (a != null) {
+                    Imgproc.rectangle(left.getFrame(), new Point(a.getValue().x, a.getValue().y), new Point(a.getValue().x + a.getValue().width, a.getValue().y + a.getValue().height), new Scalar(0, 255, 0));
+                    Imgproc.putText(left.getFrame(), a.getKey() + "", new Point(a.getValue().x + a.getValue().width + 10, a.getValue().y + a.getValue().height + 10), 0, 0.8, new Scalar(0, 255, 0));
+                }
+                HighGui.imshow("Left", left.getFrame());
+            }
+            if (right.isOpened()) {
+                try {
+                    right.capture();
+                } catch (IOException e) {
+                    right.close();
+                    continue;
+                }
+                Pair<Character, Rect> a = right.getFrame().predictWithShape();
+                if (a != null) {
+                    Imgproc.rectangle(right.getFrame(), new Point(a.getValue().x, a.getValue().y), new Point(a.getValue().x + a.getValue().width, a.getValue().y + a.getValue().height), new Scalar(0, 255, 0));
+                    Imgproc.putText(right.getFrame(), a.getKey() + "", new Point(a.getValue().x + a.getValue().width + 10, a.getValue().y + a.getValue().height + 10), 0, 0.8, new Scalar(0, 255, 0));
+                }
+                HighGui.imshow("Right", right.getFrame());
+            }
+            if (HighGui.waitKey(1) == 'Q') break;
         }
-        System.out.println("Ready to start");
-        SerialConnector c = new SerialConnector(ports[ports.length - 1], 115200);
-        Matrix m = new Matrix(c, left, right);
-        m.start();
+        left.close();
+        right.close();
+        System.exit(0);
     }
 
     private static boolean getValuesFromJson(JsonObject obj) {
