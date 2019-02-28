@@ -90,8 +90,12 @@ public class Brain {
             System.err.println("No serial port available!");
             System.exit(1);
         }
+        System.out.println(SerialPort.getCommPort("Maple").getSystemPortName());
+        for (SerialPort p : ports) {
+            System.out.println(p.getSystemPortName() + " has description " + p.getDescriptivePortName());
+        }
         System.out.println("Ready to start");
-        SerialConnector c = new SerialConnector(ports[ports.length - 1], 115200);
+        SerialConnector c = new SerialConnector(SerialPort.getCommPort("COM5"), 115200);
         Matrix m = new Matrix(c, left, right);
         m.start();
     }
