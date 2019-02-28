@@ -79,6 +79,7 @@ public class Matrix {
                     direction = getNewCardinalDirection(direction, dir);
                     actual = getCellByCardinalDirection(actual, direction);
                     if (goret == connector.GOOBSTACLE) actual.weight = 10;
+                    if (goret == connector.GORISE) actual.weight = 20;
                 }
             } else {
                 System.out.println("Finished! MISSION COMPLETED!");
@@ -151,7 +152,7 @@ public class Matrix {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
                     if (tempw != -1) {
                         tempw += weights[i];
-                        if (weight == -1 || tempw < weight) {
+                        if ((tempw - weights[i]) == 0 || weight == -1 || tempw < weight) {
                             weight = tempw;
                             pos = i;
                         }

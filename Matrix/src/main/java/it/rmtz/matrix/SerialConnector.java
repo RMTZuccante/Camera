@@ -12,15 +12,14 @@ import java.nio.ByteOrder;
  */
 
 public class SerialConnector {
-    final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8;
-    final byte STX = 2, ETX = 3, RES = -128, READY = 8;
-    byte[] buffer = new byte[10];
+    public final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8;
+    public final byte STX = 2, ETX = 3, RES = -128, READY = 8;
+    public final int DFRONTL = 0, DFRONTR = 1, DRIGHT = 3, DLEFT = 2, DBACK = 4;
+    public final int MIRROR = 1, WHITE = 0;
+    public final int TLEFT = 0, TRIGHT = 1;
+    public final int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
 
-    int DFRONTL = 0, DFRONTR = 1, DRIGHT = 3, DLEFT = 2, DBACK = 4;
-    int MIRROR = 1, WHITE = 0;
-    int TLEFT = 0, TRIGHT = 1;
-    int GOBLACK = 1, GOOBSTACLE = 2;
-
+    private byte[] buffer = new byte[10];
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
     private byte result;
