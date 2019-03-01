@@ -84,6 +84,7 @@ public class SerialConnector {
      * Send the HANDSHAKE command and a number, the expected response is 2 times the number
      */
     public synchronized boolean handShake() {
+        waitForReady();
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
         byte n = 24;
         buffer[0] = HANDSHAkE;
@@ -106,6 +107,7 @@ public class SerialConnector {
     }
 
     public synchronized void rotate(int angle, boolean right) {
+        waitForReady();
         buffer[0] = ROTATE;
         buffer[1] = (byte) (right ? 0 : 1);
         buffer[2] = (byte) angle;
@@ -118,6 +120,7 @@ public class SerialConnector {
     }
 
     public synchronized int go() {
+        waitForReady();
         buffer[0] = GO;
         stm.writeBytes(buffer, 1);
         try {
@@ -129,6 +132,7 @@ public class SerialConnector {
     }
 
     public synchronized void victim(int packets) {
+        waitForReady();
         buffer[0] = VICTIM;
         buffer[1] = (byte) packets;
         stm.writeBytes(buffer, 2);
@@ -140,6 +144,7 @@ public class SerialConnector {
     }
 
     public synchronized short[] getDistances() {
+        waitForReady();
         disableEvents();
         int length = 2;
         int num = 5;
@@ -154,6 +159,7 @@ public class SerialConnector {
     }
 
     public synchronized int getColor() {
+        waitForReady();
         disableEvents();
         buffer[0] = GETCOLOR;
         stm.writeBytes(buffer, 1);
@@ -163,6 +169,7 @@ public class SerialConnector {
     }
 
     public synchronized float[] getTemps() {
+        waitForReady();
         int length = 4;
         int num = 2;
         disableEvents();
@@ -177,6 +184,7 @@ public class SerialConnector {
     }
 
     public synchronized void setDebug(byte level) {
+        waitForReady();
         buffer[0] = SETDEBUG;
         buffer[1] = level;
         stm.writeBytes(buffer, 2);
@@ -190,6 +198,7 @@ public class SerialConnector {
                 System.err.println("Error while waiting for the robot to be ready...");
             }
         }
+        ready = false;
     }
 
     public String getConnectionInfo() {
