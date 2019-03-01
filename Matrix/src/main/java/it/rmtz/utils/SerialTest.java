@@ -23,7 +23,6 @@ public class SerialTest {
         System.out.println("Connected!");
 
         while (true) {
-            stm.waitForReady();
             System.out.print("Inserisci comando: ");
             switch (sc.nextLine().toLowerCase()) {
                 case "rotate":
