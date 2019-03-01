@@ -84,7 +84,6 @@ public class SerialConnector {
      * Send the HANDSHAKE command and a number, the expected response is 2 times the number
      */
     public synchronized boolean handShake() {
-        waitForReady();
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
         byte n = 24;
         buffer[0] = HANDSHAkE;
