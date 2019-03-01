@@ -21,6 +21,18 @@ public class Matrix {
         this.bodyTemp = bodyTemp;
     }
 
+    public static void main(String[] args) {
+        Matrix m = new Matrix(null, null, null, 0, 0);
+        m.direction = m.WEST;
+        for (int i = 0; i < 4; i++) {
+            if (m.direction == m.NORTH) System.out.println("NORTH");
+            else if (m.direction == m.SOUTH) System.out.println("SOUTH");
+            else if (m.direction == m.EAST) System.out.println("EAST");
+            else System.out.println("WEST");
+            m.direction = m.getNewCardinalDirection(m.direction, Direction.FRONT);
+        }
+    }
+
     public void start() {
         while (!connector.handShake()) {
             System.err.println("Handshake failed!");
@@ -34,7 +46,7 @@ public class Matrix {
 
         connector.waitForReady();
 
-        connector.setDebug((byte)0);
+        connector.setDebug((byte) 0);
 
         start = actual = new Cell();
 
@@ -71,14 +83,13 @@ public class Matrix {
                     connector.victim(1);
                 }
 
-
+                direction = getNewCardinalDirection(direction, dir);
                 System.out.println("Go straight");
                 int goret = connector.go();
                 if (goret == connector.GOBLACK) {
                     getCellByCardinalDirection(actual, direction).black = true;
                     firstStep.next = null;
                 } else {
-                    direction = getNewCardinalDirection(direction, dir);
                     actual = getCellByCardinalDirection(actual, direction);
                     if (goret == connector.GOOBSTACLE) actual.weight = 10;
                     if (goret == connector.GORISE) actual.weight = 20;
@@ -154,9 +165,10 @@ public class Matrix {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
                     if (tempw != -1) {
                         tempw += weights[i];
-                        if ((tempw - weights[i]) == 0 || weight == -1 || tempw < weight) {
+                        if (weight == -1 || tempw < weight) {
                             weight = tempw;
                             pos = i;
+                            if (tempw - weights[i] == 0) break;
                         }
                     }
                 }
