@@ -21,12 +21,10 @@ public class SerialTest {
         System.out.println("Port opened.");
         while(!stm.handShake()) System.out.println("Trying handshake...");
         System.out.println("Connected!");
-        System.out.println("Waiting for the robot to be ready...");
-        stm.waitForReady();
-        System.out.println("READY!");
-        System.out.println();
 
         while (true) {
+            stm.waitForReady();
+            System.out.print("Inserisci comando: ");
             switch (sc.nextLine().toLowerCase()) {
                 case "rotate":
                     System.out.print("Angle: ");
