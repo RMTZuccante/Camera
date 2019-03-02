@@ -1,6 +1,5 @@
 package it.rmtz.camera;
 
-import javafx.util.Pair;
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
@@ -19,7 +18,7 @@ public class Frame extends Mat {
 
     public synchronized char predict() {
         Pair<Character, Rect> p = predictWithShape();
-        return p == null ? 0 : p.getKey();
+        return p == null ? 0 : p.first;
     }
 
     public synchronized Pair<Character, Rect> predictWithShape() {
@@ -71,6 +70,16 @@ public class Frame extends Mat {
                 if (area >= cam.min && area <= cam.max) inRange.add(c);
             }
             return inRange;
+        }
+    }
+
+    public class Pair<A, B> {
+        public A first;
+        public B second;
+
+        public Pair(A first, B second) {
+            this.first = first;
+            this.second = second;
         }
     }
 }

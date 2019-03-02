@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
-import javafx.util.Pair;
+import it.rmtz.camera.Frame.Pair;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.opencv.core.Point;
@@ -20,11 +20,12 @@ import java.io.FileReader;
 import java.io.IOException;
 
 /**
- * Created by Nicolò Tagliaferro
+ * Created by NicoTF
  */
 
 public class CameraTest {
     private static int cl, cr, thresh, minArea, maxAra, offset;
+    private static String libpath;
     private static char[] ref;
     private static double precision;
 
@@ -32,23 +33,7 @@ public class CameraTest {
         JsonObject config = null;
         Camera left = null, right = null;
 
-        String lp = null;
         String modelpath = "./model/model.dl4j";
-        if (args != null && args.length > 0) {
-            int i = 0;
-            try {
-                for (i = 0; i < args.length; i++) {
-                    if (args[i].equals("-lp")) {
-                        lp = args[++i];
-                    } else if (args[i].equals("-mp")) {
-                        modelpath = args[++i];
-                    }
-                }
-            } catch (IndexOutOfBoundsException e) {
-                System.err.println("Missing argument after [" + args[i - 1] + "]l");
-                System.exit(-1);
-            }
-        }
 
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
@@ -58,7 +43,7 @@ public class CameraTest {
         }
 
         if (getValuesFromJson(config)) {
-            if (Camera.loadLib(lp)) {
+            if (Camera.loadLib(libpath)) {
                 File f = new File(modelpath);
                 MultiLayerNetwork model = null;
                 if (f.exists() && f.canRead()) {
@@ -71,6 +56,7 @@ public class CameraTest {
                     }
                 } else {
                     System.err.println("Missing model file");
+                    System.exit(-1);
                 }
 
                 if (model != null) {
@@ -102,8 +88,8 @@ public class CameraTest {
                 }
                 Pair<Character, Rect> a = left.getFrame().predictWithShape();
                 if (a != null) {
-                    Imgproc.rectangle(left.getFrame(), new Point(a.getValue().x, a.getValue().y), new Point(a.getValue().x + a.getValue().width, a.getValue().y + a.getValue().height), new Scalar(0, 255, 0));
-                    Imgproc.putText(left.getFrame(), a.getKey() + "", new Point(a.getValue().x + a.getValue().width + 10, a.getValue().y + a.getValue().height + 10), 0, 0.8, new Scalar(0, 255, 0));
+                    Imgproc.rectangle(left.getFrame(), new Point(a.second.x, a.second.y), new Point(a.second.x + a.second.width, a.second.y + a.second.height), new Scalar(0, 255, 0));
+                    Imgproc.putText(left.getFrame(), a.first + "", new Point(a.second.x + a.second.width + 10, a.second.y + a.second.height + 10), 0, 0.8, new Scalar(0, 255, 0));
                 }
                 HighGui.imshow("Left", left.getFrame());
             }
@@ -116,8 +102,8 @@ public class CameraTest {
                 }
                 Pair<Character, Rect> a = right.getFrame().predictWithShape();
                 if (a != null) {
-                    Imgproc.rectangle(right.getFrame(), new Point(a.getValue().x, a.getValue().y), new Point(a.getValue().x + a.getValue().width, a.getValue().y + a.getValue().height), new Scalar(0, 255, 0));
-                    Imgproc.putText(right.getFrame(), a.getKey() + "", new Point(a.getValue().x + a.getValue().width + 10, a.getValue().y + a.getValue().height + 10), 0, 0.8, new Scalar(0, 255, 0));
+                    Imgproc.rectangle(right.getFrame(), new Point(a.second.x, a.second.y), new Point(a.second.x + a.second.width, a.second.y + a.second.height), new Scalar(0, 255, 0));
+                    Imgproc.putText(right.getFrame(), a.first + "", new Point(a.second.x + a.second.width + 10, a.second.y + a.second.height + 10), 0, 0.8, new Scalar(0, 255, 0));
                 }
                 HighGui.imshow("Right", right.getFrame());
             }
@@ -142,6 +128,7 @@ public class CameraTest {
             maxAra = obj.get("MAX_AREA").getAsInt();
             offset = obj.get("OFFSET").getAsInt();
             precision = obj.get("PRECISION").getAsDouble();
+            libpath = obj.get("LIBPATH").getAsString();
         } catch (NullPointerException e) {
             return false;
         }
