@@ -14,7 +14,7 @@ public class ConvertModel {
         try {
             System.out.println("Looking for model.h5 in ./model");
             File f = new File("./model/model.h5");
-            MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(f.getAbsolutePath());
+            MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(f.getAbsolutePath(), false);
             ModelSerializer.writeModel(model, new File("./model/model.dl4j"), true);
             System.out.println("Model converted");
         } catch (IOException e) {

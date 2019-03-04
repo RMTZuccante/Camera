@@ -75,7 +75,7 @@ def setMaxAera(spbox):
 if __name__ == "__main__":
     global config, configfile
 
-    configfile = open('config.json', 'r+')
+    configfile = open('../config.json', 'r+')
     config = json.load(configfile)
     print('Your hostname is: ', socket.gethostname())
     print('Your IPs are:')

@@ -32,7 +32,7 @@ def findShapes(image, blackval, range=None):
         conts = []
         for c in contours:
             # If the shape is taller than wide and its area is between two values insert int in the array
-            _, _, h, w = cv2.boundingRect(c)
+            _, _, w, h = cv2.boundingRect(c)
             if h > w and range[0] <= cv2.contourArea(c) <= range[1]:
                 conts.append(c)
         contours = conts
