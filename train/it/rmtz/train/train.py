@@ -26,14 +26,14 @@ def findShapes(image, blackval, range=None):
     _, th = cv2.threshold(image, blackval, 255, cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
     contours = cv2.findContours(th, cv2.RETR_TREE,
                                 cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes (it returns other values like the success)
-    contours = contours[len(
-        contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
+    contours = contours[len(contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
 
     if range is not None:
         conts = []
         for c in contours:
-            # If the shape area is between two values insert int in the array
-            if range[0] <= cv2.contourArea(c) <= range[1]:
+            # If the shape is taller than wide and its area is between two values insert int in the array
+            _, _, h, w = cv2.boundingRect(c)
+            if h > w and range[0] <= cv2.contourArea(c) <= range[1]:
                 conts.append(c)
         contours = conts
     return contours, image
@@ -46,7 +46,7 @@ def train(model):
     else:
         lbls = utils.to_categorical(labels, num_classes=None)
         try:
-            model.fit(array(images) / 255.0, lbls, epochs=10)
+            model.fit(array(images), lbls, epochs=10)
             labels = []
             images = []
         except ValueError:
@@ -99,6 +99,17 @@ def save():
             errprint('Cannot save an empty model!')
     except FileNotFoundError:
         errprint('Unable to save model, file not found')
+
+
+def deflect(img):
+    newimg = cv2.bitwise_not(img)
+    thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    coords = np.column_stack(np.where(thresh > 0))
+    angle = cv2.minAreaRect(coords)[-1]
+    if angle < -45:
+        angle = -(90 + angle)
+    else:
+        angle = -angle
 
 
 title = "Train"
@@ -176,10 +187,10 @@ if __name__ == "__main__":
                 k = chr(cv2.waitKey()).upper()
                 if k in ref:
                     lim = gray[y - offset: y + h + offset, x - offset:x + w + offset]
+
                     lim = cv2.resize(lim, (80, 80))
                     labels.append(ref.index(k))
-                    _, th = cv2.threshold(lim, thresh, 255, cv2.THRESH_BINARY)
-                    images.append(th)
+                    images.append(lim / 255.0)
                 elif k is ord('q'):
                     break
 
