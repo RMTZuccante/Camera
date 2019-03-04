@@ -64,9 +64,9 @@ def test():
             try:
                 img = cv2.resize(img, (80, 80))
             except cv2.error:
-                print('sucz')
                 img = grey[y: y + h, x:x + w]
                 img = cv2.resize(img, (80, 80))
+
             _, img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)
             img = expand_dims(img, 0)
             pred = model.predict(img / 255.0)

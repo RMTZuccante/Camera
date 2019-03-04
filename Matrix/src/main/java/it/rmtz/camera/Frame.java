@@ -22,23 +22,20 @@ public class Frame extends Mat {
     }
 
     public synchronized Pair<Character, Rect> predictWithShape() {
-        Pair<Character, Rect> pred = null;
-        Mat threshold = new Mat();
-        Imgproc.cvtColor(this, threshold, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.threshold(threshold, threshold, cam.black, 255, Imgproc.THRESH_BINARY);
-        ArrayList<MatOfPoint> conts = findShapes(threshold);
+        Pair<Character, Rect> pred = new Pair<>(null, null);
+        Pair<ArrayList<MatOfPoint>, Mat> found = findShapes();
         double prob = 0;
-        for (int i = 0; i < conts.size(); i++) {
-            MatOfPoint c = conts.get(i);
+        for (MatOfPoint c : found.first) {
             Rect bound = Imgproc.boundingRect(c);
-            INDArray arr = getInputImage(threshold, bound);
+            INDArray arr = getInputImage(found.second, bound);
             INDArray predict = cam.model.output(arr);
             if (predict.amax().getDouble(0) > cam.precision && predict.amax().getDouble(0) > prob) {
                 prob = predict.amax().getDouble(0);
-                pred = new Pair<>(Camera.ref[predict.argMax().getInt(0)], bound);
+                pred.first = Camera.ref[predict.argMax().getInt(0)];
+                pred.second = bound;
             }
         }
-        return pred;
+        return pred.first == null ? null : pred;
     }
 
     private INDArray getInputImage(Mat img, Rect rect) {
@@ -59,18 +56,30 @@ public class Frame extends Mat {
         }
     }
 
-    private ArrayList<MatOfPoint> findShapes(Mat threshold) {
-        ArrayList<MatOfPoint> conts = new ArrayList<>();
+    private Pair<ArrayList<MatOfPoint>, Mat> findShapes() {
+        Mat gray = new Mat();
+        Mat threshold = new Mat();
+        Imgproc.cvtColor(this, gray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.threshold(gray, threshold, cam.black, 255, Imgproc.THRESH_BINARY);
+
+        ArrayList<MatOfPoint> conts = new ArrayList<>(5);
+        ArrayList<MatOfPoint> candidates = new ArrayList<>(3);
+
         Imgproc.findContours(threshold, conts, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        if (cam.min == -1 || cam.max == -1) return conts;
-        else {
-            ArrayList<MatOfPoint> inRange = new ArrayList<>();
+
+        if (cam.min != -1 && cam.max != -1) {
             for (MatOfPoint c : conts) {
                 double area = Imgproc.contourArea(c);
-                if (area >= cam.min && area <= cam.max) inRange.add(c);
+                Rect r = Imgproc.boundingRect(c);
+                if (r.height > r.width && area >= cam.min && area <= cam.max) candidates.add(c);
             }
-            return inRange;
+        } else {
+            for (MatOfPoint c : conts) {
+                Rect r = Imgproc.boundingRect(c);
+                if (r.height > r.width) candidates.add(c);
+            }
         }
+        return new Pair<>(candidates, gray);
     }
 
     public class Pair<A, B> {
