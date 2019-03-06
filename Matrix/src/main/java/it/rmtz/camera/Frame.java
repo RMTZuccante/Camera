@@ -2,7 +2,6 @@ package it.rmtz.camera;
 
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.api.preprocessor.ImagePreProcessingScaler;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
@@ -46,10 +45,9 @@ public class Frame extends Mat {
         }
         Imgproc.resize(img, img, new Size(80, 80));
         NativeImageLoader loader = new NativeImageLoader(80, 80, 1);
-        ImagePreProcessingScaler scaler = new ImagePreProcessingScaler();
         try {
             INDArray mat = loader.asMatrix(img);
-            scaler.transform(mat);
+            mat.div(255.0);
             return mat;
         } catch (IOException e) {
             return null;

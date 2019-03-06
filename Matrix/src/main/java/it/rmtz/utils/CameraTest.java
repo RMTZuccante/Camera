@@ -6,15 +6,14 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
 import it.rmtz.camera.Frame.Pair;
+import it.rmtz.camera.ModelLoader;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.util.ModelSerializer;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -44,18 +43,11 @@ public class CameraTest {
 
         if (getValuesFromJson(config)) {
             if (Camera.loadLib(libpath)) {
-                File f = new File(modelpath);
                 MultiLayerNetwork model = null;
-                if (f.exists() && f.canRead()) {
-                    try {
-                        model = ModelSerializer.restoreMultiLayerNetwork(f.getAbsolutePath());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        System.err.println("\n\nError loading model:");
-                        model = null;
-                    }
-                } else {
-                    System.err.println("Missing model file");
+                try {
+                    model = ModelLoader.loadModel(modelpath);
+                } catch (ModelLoader.ModelLoaderException e) {
+                    e.printStackTrace();
                     System.exit(-1);
                 }
 
@@ -78,7 +70,7 @@ public class CameraTest {
             System.err.println("Error loading config.json");
         }
 
-        while (left.isOpened() || right.isOpened()) {
+        if (left != null) while (left.isOpened() || right.isOpened()) {
             if (left.isOpened()) {
                 try {
                     left.capture();

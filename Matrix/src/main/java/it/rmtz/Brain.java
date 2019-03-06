@@ -6,15 +6,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import it.rmtz.camera.Camera;
+import it.rmtz.camera.ModelLoader;
 import it.rmtz.matrix.Matrix;
 import it.rmtz.matrix.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.util.ModelSerializer;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 
 public class Brain {
     private static int cl, cr, thresh, minArea, maxAra, offset, distwall;
@@ -44,18 +42,12 @@ public class Brain {
 
         if (getValuesFromJson(config)) {
             if (Camera.loadLib(libpath)) {
-                File f = new File(modelpath);
                 MultiLayerNetwork model = null;
-                if (f.exists() && f.canRead()) {
-                    try {
-                        model = ModelSerializer.restoreMultiLayerNetwork(f.getAbsolutePath());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        System.err.println("\n\nError loading model:");
-                        model = null;
-                    }
-                } else {
-                    System.err.println("Missing model file");
+                try {
+                    model = ModelLoader.loadModel(modelpath);
+                } catch (ModelLoader.ModelLoaderException e) {
+                    e.printStackTrace();
+                    System.exit(-1);
                 }
 
                 if (model != null) {
