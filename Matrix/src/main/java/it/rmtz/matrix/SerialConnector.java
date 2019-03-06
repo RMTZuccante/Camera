@@ -157,14 +157,18 @@ public class SerialConnector {
         return arr;
     }
 
-    public synchronized int getColor() {
+    public synchronized Color getColor() {
         waitForReady();
         disableEvents();
         buffer[0] = GETCOLOR;
         stm.writeBytes(buffer, 1);
-        stm.readBytes(buffer, 1);
+        stm.readBytes(buffer, 8);
         enableEvents();
-        return buffer[0];
+        short[] arr = new short[4];
+        for (int i = 0; i < 4; i++)
+            arr[i] = ByteBuffer.wrap(buffer, 2 * i, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
+
+        return new Color(Short.toUnsignedInt(arr[0]),Short.toUnsignedInt(arr[1]),Short.toUnsignedInt(arr[2]),Short.toUnsignedInt(arr[3]));
     }
 
     public synchronized float[] getTemps() {
@@ -202,5 +206,45 @@ public class SerialConnector {
 
     public String getConnectionInfo() {
         return "Port: " + stm.getSystemPortName() + "\nBaud: " + stm.getBaudRate();
+    }
+
+    public class Color {
+        private int red;
+        private int green;
+        private int blue;
+        private int ambient;
+
+        public Color(int red, int green, int blue, int ambient) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+            this.ambient = ambient;
+        }
+
+        public int getRed() {
+            return red;
+        }
+
+        public int getGreen() {
+            return green;
+        }
+
+        public int getBlue() {
+            return blue;
+        }
+
+        public int getAmbient() {
+            return ambient;
+        }
+
+        @Override
+        public String toString() {
+            return "Color{" +
+                    "red=" + red +
+                    ", green=" + green +
+                    ", blue=" + blue +
+                    ", ambient=" + ambient +
+                    '}';
+        }
     }
 }
