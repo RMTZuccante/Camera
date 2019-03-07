@@ -3,10 +3,12 @@ package it.rmtz.matrix;
 import it.rmtz.camera.Camera;
 import it.rmtz.matrix.SerialConnector.Color;
 
+import static it.rmtz.matrix.SerialConnector.*;
+
 public class Matrix {
-    final byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
-    Camera left, right;
-    byte direction = NORTH;
+    private final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
+    private final Camera left, right;
+    private byte direction = NORTH;
     private SerialConnector connector;
     private int maxWallDist;
     private Cell start, actual;
@@ -73,14 +75,14 @@ public class Matrix {
 
                 System.out.println("Go straight");
                 int goret = connector.go();
-                if (goret == connector.GOBLACK) {
+                if (goret == GOBLACK) {
                     getCellByCardinalDirection(actual, direction).black = true;
                     firstStep.next = null;
                 } else {
                     direction = getNewCardinalDirection(direction, dir);
                     actual = getCellByCardinalDirection(actual, direction);
-                    if (goret == connector.GOOBSTACLE) actual.weight = 10;
-                    if (goret == connector.GORISE) actual.weight = 20;
+                    if (goret == GOOBSTACLE) actual.weight = 10;
+                    if (goret == GORISE) actual.weight = 20;
                 }
             } else {
                 System.out.println("Finished! MISSION COMPLETED!");
@@ -92,23 +94,23 @@ public class Matrix {
     private void inspectCell() {
         short[] distances = connector.getDistances();
 
-        if (distances[connector.DFRONTL] > maxWallDist) { //TODO bottle
+        if (distances[DFRONTL] > maxWallDist) { //TODO bottle
             addFrontCell();
         }
-        if (distances[connector.DLEFT] > maxWallDist) {
+        if (distances[DLEFT] > maxWallDist) {
             addLeftCell();
         }
-        if (distances[connector.DRIGHT] > maxWallDist) {
+        if (distances[DRIGHT] > maxWallDist) {
             addRightCell();
         }
-        if (distances[connector.DBACK] > maxWallDist) {
+        if (distances[DBACK] > maxWallDist) {
             addBackCell();
         }
 
         actual.mirror = isMirror();
 
         float[] temps = connector.getTemps();
-        if (temps[connector.TLEFT] > bodyTemp || temps[connector.TRIGHT] > bodyTemp)
+        if (temps[TLEFT] > bodyTemp || temps[TRIGHT] > bodyTemp)
             actual.victim = true;
 
         actual.visited = true;
@@ -148,9 +150,9 @@ public class Matrix {
             if (cell.visited) {
                 cell.considered = true;
 
-                Step steps[] = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)};
-                byte cardinals[] = new byte[]{direction, getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.BACK)};
-                int weights[] = new int[]{0, 1, 1, 2};
+                Step[] steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)};
+                byte[] cardinals = new byte[]{direction, getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.BACK)};
+                int[] weights = new int[]{0, 1, 1, 2};
                 int pos = -1;
 
                 for (int i = 0; i < 4; i++) {
