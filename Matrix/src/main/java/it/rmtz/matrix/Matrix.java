@@ -193,118 +193,37 @@ public class Matrix {
     }
 
     private void addFrontCell() {
-        switch (direction) {
-            case NORTH:
-                if (actual.north == null) {
-                    actual.north = new Cell();
-                    actual.north.south = actual;
-                }
-                break;
-            case SOUTH:
-                if (actual.south == null) {
-                    actual.south = new Cell();
-                    actual.south.north = actual;
-                }
-                break;
-            case EAST:
-                if (actual.east == null) {
-                    actual.east = new Cell();
-                    actual.east.west = actual;
-                }
-                break;
-            case WEST:
-                if (actual.west == null) {
-                    actual.west = new Cell();
-                    actual.west.east = actual;
-                }
-                break;
-        }
+        addCell(NORTH, SOUTH, EAST, WEST);
     }
 
     private void addRightCell() {
-        switch (direction) {
-            case WEST:
-                if (actual.north == null) {
-                    actual.north = new Cell();
-                    actual.north.south = actual;
-                }
-                break;
-            case EAST:
-                if (actual.south == null) {
-                    actual.south = new Cell();
-                    actual.south.north = actual;
-                }
-                break;
-            case NORTH:
-                if (actual.east == null) {
-                    actual.east = new Cell();
-                    actual.east.west = actual;
-                }
-                break;
-            case SOUTH:
-                if (actual.west == null) {
-                    actual.west = new Cell();
-                    actual.west.east = actual;
-                }
-                break;
-        }
+        addCell(WEST, EAST, NORTH, SOUTH);
     }
 
     private void addLeftCell() {
-        switch (direction) {
-            case EAST:
-                if (actual.north == null) {
-                    actual.north = new Cell();
-                    actual.north.south = actual;
-                }
-                break;
-            case WEST:
-                if (actual.south == null) {
-                    actual.south = new Cell();
-                    actual.south.north = actual;
-                }
-                break;
-            case SOUTH:
-                if (actual.east == null) {
-                    actual.east = new Cell();
-                    actual.east.west = actual;
-                }
-                break;
-            case NORTH:
-                if (actual.west == null) {
-                    actual.west = new Cell();
-                    actual.west.east = actual;
-                }
-                break;
-        }
+        addCell(EAST, WEST, SOUTH, NORTH);
     }
 
     private void addBackCell() {
-        switch (direction) {
-            case SOUTH:
-                if (actual.north == null) {
-                    actual.north = new Cell();
-                    actual.north.south = actual;
-                }
-                break;
-            case NORTH:
-                if (actual.south == null) {
-                    actual.south = new Cell();
-                    actual.south.north = actual;
-                }
-                break;
-            case WEST:
-                if (actual.east == null) {
-                    actual.east = new Cell();
-                    actual.east.west = actual;
-                }
-                break;
-            case EAST:
-                if (actual.west == null) {
-                    actual.west = new Cell();
-                    actual.west.east = actual;
-                }
-                break;
+        addCell(SOUTH, NORTH, WEST, EAST);
+    }
+
+    private void addCell(byte south, byte north, byte west, byte east) {
+        if(direction == south && actual.north == null) {
+            actual.north = new Cell();
+            actual.north.south = actual;
+        }
+        else if (direction == north && actual.south == null) {
+            actual.south = new Cell();
+            actual.south.north = actual;
+        }
+        else if (direction == west && actual.east == null) {
+            actual.east = new Cell();
+            actual.east.west = actual;
+        }
+        else if (direction == east && actual.west == null) {
+            actual.west = new Cell();
+            actual.west.east = actual;
         }
     }
 
