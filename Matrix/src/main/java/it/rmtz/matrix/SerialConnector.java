@@ -12,7 +12,7 @@ import java.nio.ByteOrder;
  */
 
 public class SerialConnector {
-    public final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8;
+    public final byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9;
     public final byte STX = 2, ETX = 3, RES = -128, READY = 8;
     public final int DFRONTL = 0, DFRONTR = 1, DRIGHT = 3, DLEFT = 2, DBACK = 4;
     public final int MIRROR = 1, WHITE = 0;
@@ -193,7 +193,14 @@ public class SerialConnector {
         stm.writeBytes(buffer, 2);
     }
 
-    public synchronized void waitForReady() {
+    public synchronized void setBlackThreshold(byte blackThreshold) {
+        waitForReady();
+        buffer[0] = SETBLACK;
+        buffer[1] = blackThreshold;
+        stm.writeBytes(buffer, 2);
+    }
+
+    private synchronized void waitForReady() {
         while (!ready) {
             try {
                 wait();

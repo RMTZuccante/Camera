@@ -50,10 +50,14 @@ public class SerialTest {
                     System.out.println("Victim ended.");
                     break;
                 case "setdebug":
-                    System.out.println("Level number: ");
+                    System.out.print("Level number: ");
                     sc.nextLine(); //consuming a nextline char
                     stm.setDebug(sc.nextByte());
                     break;
+                case "setblack":
+                    System.out.print("New black threshold: ");
+                    sc.nextLine();
+                    stm.setBlackThreshold(sc.nextByte());
                 case "getconnectioninfo":
                     System.out.println(stm.getConnectionInfo());
                     break;
