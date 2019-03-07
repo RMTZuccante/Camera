@@ -1,6 +1,7 @@
 package it.rmtz.matrix;
 
 import it.rmtz.camera.Camera;
+import it.rmtz.matrix.SerialConnector.Color;
 
 public class Matrix {
     final byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
@@ -104,15 +105,19 @@ public class Matrix {
             addBackCell();
         }
 
-        int color = connector.getColor();
-        if (color == connector.MIRROR)
-            actual.mirror = true;
+        actual.mirror = isMirror();
 
         float[] temps = connector.getTemps();
         if (temps[connector.TLEFT] > bodyTemp || temps[connector.TRIGHT] > bodyTemp)
             actual.victim = true;
 
         actual.visited = true;
+    }
+
+    private boolean isMirror() {
+        Color color = connector.getColor();
+        // TODO improve detections rules
+        return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
     }
 
     private Direction nextDirection() {
