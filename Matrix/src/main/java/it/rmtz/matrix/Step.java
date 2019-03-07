@@ -1,9 +1,5 @@
 package it.rmtz.matrix;
 
-/**
- * Created by Nicolò Tagliaferro
- */
-
 public class Step {
     Matrix.Direction direction;
     Step next;

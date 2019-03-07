@@ -1,18 +1,22 @@
 package it.rmtz.matrix;
 
 import it.rmtz.camera.Camera;
+import it.rmtz.matrix.Cell.Victim;
 import it.rmtz.matrix.SerialConnector.Color;
+
+import java.awt.*;
 
 import static it.rmtz.matrix.SerialConnector.*;
 
 public class Matrix {
     private final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     private final Camera left, right;
-    private byte direction = NORTH;
+    private byte direction;
     private SerialConnector connector;
     private int maxWallDist;
     private Cell start, actual;
     private float bodyTemp;
+    private Point coords;
 
     private Step firstStep = new Step();
 
@@ -22,6 +26,8 @@ public class Matrix {
         this.connector = connector;
         this.maxWallDist = maxWallDist;
         this.bodyTemp = bodyTemp;
+        direction = NORTH;
+        coords = new Point(0, 0);
     }
 
     public void start() {
@@ -35,11 +41,12 @@ public class Matrix {
             }
         }
 
-        connector.setDebug((byte)0);
+        connector.setDebug((byte) 0);
 
         start = actual = new Cell();
 
         while (true) {
+            boolean victimfound = actual.victim != Victim.NONE;
             inspectCell();
             Direction dir = nextDirection();
             if (dir != null) {
@@ -67,20 +74,28 @@ public class Matrix {
                         break;
 
                 }
+                if (actual.victim != Victim.NONE && !victimfound) {
+                    int packages = 0;
 
-                if (actual.victim) {
-                    connector.victim(1);
+                    if (actual.victim == Victim.HEAT || actual.victim == Victim.S) {
+                        packages = 1;
+                    } else if (actual.victim == Victim.H) {
+                        packages = 2;
+                    }
+                    connector.victim(packages);
                 }
 
 
                 System.out.println("Go straight");
+                direction = getNewCardinalDirection(direction, dir);
+
+                go(true);
                 int goret = connector.go();
                 if (goret == GOBLACK) {
-                    getCellByCardinalDirection(actual, direction).black = true;
+                    actual.black = true;
                     firstStep.next = null;
+                    go(false);
                 } else {
-                    direction = getNewCardinalDirection(direction, dir);
-                    actual = getCellByCardinalDirection(actual, direction);
                     if (goret == GOOBSTACLE) actual.weight = 10;
                     if (goret == GORISE) actual.weight = 20;
                 }
@@ -108,8 +123,34 @@ public class Matrix {
         }
 
         actual.mirror = isMirror();
-        actual.victim = isVictim();
+        if (isVictim()) actual.victim = Victim.HEAT;
         actual.visited = true;
+    }
+
+    private void go(boolean forward) {
+        if (forward) {
+            actual = getCellByCardinalDirection(actual, direction);
+        } else {
+            actual = getCellByCardinalDirection(actual, getNewCardinalDirection(direction, Direction.BACK));
+        }
+        int dir = forward ? direction : getNewCardinalDirection(direction, Direction.BACK);
+        coords = getPointByDirection(coords, dir);
+    }
+
+    private Point getPointByDirection(Point sp, int dir) {
+        Point p = new Point(sp.x, sp.y);
+        switch (dir) {
+            case NORTH:
+                p.y++;
+                break;
+            case SOUTH:
+                p.y--;
+            case EAST:
+                p.x++;
+            case WEST:
+                p.x--;
+        }
+        return p;
     }
 
     private boolean isMirror() {
@@ -218,19 +259,16 @@ public class Matrix {
     }
 
     private void addCell(byte south, byte north, byte west, byte east) {
-        if(direction == south && actual.north == null) {
+        if (direction == south && actual.north == null) {
             actual.north = new Cell();
             actual.north.south = actual;
-        }
-        else if (direction == north && actual.south == null) {
+        } else if (direction == north && actual.south == null) {
             actual.south = new Cell();
             actual.south.north = actual;
-        }
-        else if (direction == west && actual.east == null) {
+        } else if (direction == west && actual.east == null) {
             actual.east = new Cell();
             actual.east.west = actual;
-        }
-        else if (direction == east && actual.west == null) {
+        } else if (direction == east && actual.west == null) {
             actual.west = new Cell();
             actual.west.east = actual;
         }

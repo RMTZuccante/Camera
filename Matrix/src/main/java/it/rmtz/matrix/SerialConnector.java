@@ -7,10 +7,6 @@ import com.fazecast.jSerialComm.SerialPortEvent;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-/**
- * Created by Nicolò Tagliaferro
- */
-
 public class SerialConnector {
     public final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9;
     public final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
