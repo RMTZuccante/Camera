@@ -108,11 +108,7 @@ public class Matrix {
         }
 
         actual.mirror = isMirror();
-
-        float[] temps = connector.getTemps();
-        if (temps[TLEFT] > bodyTemp || temps[TRIGHT] > bodyTemp)
-            actual.victim = true;
-
+        actual.victim = isVictim();
         actual.visited = true;
     }
 
@@ -120,6 +116,12 @@ public class Matrix {
         Color color = connector.getColor();
         // TODO improve detections rules
         return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
+    }
+
+    private boolean isVictim() {
+        float[] temps = connector.getTemps();
+        // TODO improve detections rules
+        return temps[TLEFT] > bodyTemp || temps[TRIGHT] > bodyTemp;
     }
 
     private Direction nextDirection() {
