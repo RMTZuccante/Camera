@@ -6,7 +6,7 @@ plugins {
 version '1.0'
 
 sourceCompatibility = 1.8
-mainClassName = 'it.rmtz.Brain'
+mainClassName = 'Brain'
 
 repositories {
     mavenCentral()
@@ -14,7 +14,7 @@ repositories {
 
 task fatJar(type: Jar) {
     manifest {
-        attributes 'Main-Class': 'it.rmtz.Brain'
+        attributes 'Main-Class': 'Brain'
     }
     baseName = 'Brain'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }

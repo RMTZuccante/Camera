@@ -1,4 +1,4 @@
-package it.rmtz.matrix;
+package matrix;
 
 public class Step {
     Matrix.Direction direction;

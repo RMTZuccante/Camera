@@ -1,32 +1,29 @@
-package it.rmtz.utils;
-
+import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import it.rmtz.camera.Camera;
-import it.rmtz.camera.Frame.Pair;
-import it.rmtz.camera.ModelLoader;
+import camera.Camera;
+import camera.ModelLoader;
+import matrix.Matrix;
+import matrix.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.highgui.HighGui;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 
-/**
- * Created by NicoTF
- */
-
-public class CameraTest {
-    private static int cl, cr, thresh, minArea, maxAra, offset;
-    private static String libpath;
+public class Brain {
+    private static int cl, cr, thresh, minArea, maxAra, offset, distwall;
+    private static float bodytemp;
     private static char[] ref;
     private static double precision;
+    private static String libpath;
+
+    private static SerialPort stm;
+
+    private static Thread shutdown = new Thread(() -> {
+        System.out.println("Closing serial port: " + (stm.closePort() ? "TRUE" : "FALSE"));
+    });
 
     public static void main(String[] args) {
         JsonObject config = null;
@@ -68,42 +65,32 @@ public class CameraTest {
             }
         } else {
             System.err.println("Error loading config.json");
+            System.exit(-1);
         }
 
-        if (left != null) while (left.isOpened() || right.isOpened()) {
-            if (left.isOpened()) {
-                try {
-                    left.capture();
-                } catch (IOException e) {
-                    left.close();
-                    continue;
-                }
-                Pair<Character, Rect> a = left.getFrame().predictWithShape();
-                if (a != null) {
-                    Imgproc.rectangle(left.getFrame(), new Point(a.second.x, a.second.y), new Point(a.second.x + a.second.width, a.second.y + a.second.height), new Scalar(0, 255, 0));
-                    Imgproc.putText(left.getFrame(), a.first + "", new Point(a.second.x + a.second.width + 10, a.second.y + a.second.height + 10), 0, 0.8, new Scalar(0, 255, 0));
-                }
-                HighGui.imshow("Left", left.getFrame());
+        stm = null;
+        for (SerialPort p : SerialPort.getCommPorts()) {
+            if (p.getDescriptivePortName().equals("Maple")) {
+                stm = p;
+                break;
             }
-            if (right.isOpened()) {
-                try {
-                    right.capture();
-                } catch (IOException e) {
-                    right.close();
-                    continue;
-                }
-                Pair<Character, Rect> a = right.getFrame().predictWithShape();
-                if (a != null) {
-                    Imgproc.rectangle(right.getFrame(), new Point(a.second.x, a.second.y), new Point(a.second.x + a.second.width, a.second.y + a.second.height), new Scalar(0, 255, 0));
-                    Imgproc.putText(right.getFrame(), a.first + "", new Point(a.second.x + a.second.width + 10, a.second.y + a.second.height + 10), 0, 0.8, new Scalar(0, 255, 0));
-                }
-                HighGui.imshow("Right", right.getFrame());
-            }
-            if (HighGui.waitKey(1) == 'Q') break;
         }
-        left.close();
-        right.close();
-        System.exit(0);
+
+        if (stm == null) {
+            System.err.println("Cannot find serial port connected to Maple, trying with args");
+            if (args.length > 0) {
+                stm = SerialPort.getCommPort(args[0]);
+            } else {
+                System.err.println("No serial port provided");
+                System.exit(-1);
+            }
+        }
+
+        System.out.println("Ready to start");
+        SerialConnector c = new SerialConnector(stm, 115200);
+        Matrix m = new Matrix(c, left, right, distwall, bodytemp);
+        Runtime.getRuntime().addShutdownHook(shutdown);
+        m.start();
     }
 
     private static boolean getValuesFromJson(JsonObject obj) {
@@ -121,6 +108,8 @@ public class CameraTest {
             offset = obj.get("OFFSET").getAsInt();
             precision = obj.get("PRECISION").getAsDouble();
             libpath = obj.get("LIBPATH").getAsString();
+            bodytemp = obj.get("BODYTEMP").getAsFloat();
+            distwall = obj.get("DISTWALL").getAsInt();
         } catch (NullPointerException e) {
             return false;
         }

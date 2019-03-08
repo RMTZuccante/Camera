@@ -1,4 +1,4 @@
-package it.rmtz.matrix;
+package matrix;
 
 public class Cell {
     Cell north, south, east, west;

@@ -1,22 +1,21 @@
-package it.rmtz.matrix;
+package matrix;
 
-import it.rmtz.camera.Camera;
-import it.rmtz.matrix.Cell.Victim;
-import it.rmtz.matrix.SerialConnector.Color;
+import camera.Camera;
+import matrix.Cell.Victim;
+import matrix.SerialConnector.*;
+import matrix.cartesian.Plane;
 
-import java.awt.*;
-
-import static it.rmtz.matrix.SerialConnector.*;
+import static matrix.SerialConnector.*;
 
 public class Matrix {
-    private final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
+    public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     private final Camera left, right;
     private byte direction;
     private SerialConnector connector;
     private int maxWallDist;
     private Cell start, actual;
     private float bodyTemp;
-    private Point coords;
+    private Plane plane;
 
     private Step firstStep = new Step();
 
@@ -27,7 +26,8 @@ public class Matrix {
         this.maxWallDist = maxWallDist;
         this.bodyTemp = bodyTemp;
         direction = NORTH;
-        coords = new Point(0, 0);
+        plane = new Plane();
+        //coords = new Point(0, 0);
     }
 
     public void start() {
@@ -134,23 +134,7 @@ public class Matrix {
             actual = getCellByCardinalDirection(actual, getNewCardinalDirection(direction, Direction.BACK));
         }
         int dir = forward ? direction : getNewCardinalDirection(direction, Direction.BACK);
-        coords = getPointByDirection(coords, dir);
-    }
-
-    private Point getPointByDirection(Point sp, int dir) {
-        Point p = new Point(sp.x, sp.y);
-        switch (dir) {
-            case NORTH:
-                p.y++;
-                break;
-            case SOUTH:
-                p.y--;
-            case EAST:
-                p.x++;
-            case WEST:
-                p.x--;
-        }
-        return p;
+        plane.move(dir);
     }
 
     private boolean isMirror() {

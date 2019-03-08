@@ -1,6 +1,6 @@
-package it.rmtz.utils;
+package utils;
 
-import it.rmtz.camera.Camera;
+import camera.Camera;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.opencv.core.Mat;

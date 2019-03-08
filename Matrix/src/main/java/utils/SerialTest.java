@@ -1,7 +1,7 @@
-package it.rmtz.utils;
+package utils;
 
 import com.fazecast.jSerialComm.SerialPort;
-import it.rmtz.matrix.SerialConnector;
+import matrix.SerialConnector;
 
 import java.util.Arrays;
 import java.util.Scanner;

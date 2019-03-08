@@ -1,4 +1,4 @@
-package it.rmtz.camera;
+package camera;
 
 import org.datavec.image.loader.NativeImageLoader;
 import org.nd4j.linalg.api.ndarray.INDArray;

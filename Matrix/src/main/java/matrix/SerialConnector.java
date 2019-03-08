@@ -1,4 +1,4 @@
-package it.rmtz.matrix;
+package matrix;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
@@ -48,9 +48,9 @@ public class SerialConnector {
                     stm.readBytes(buf, 1);
                     if (buf[0] == READY) {
                         ready = true;
-                        synchronized (serialConnector) {
-                            serialConnector.notify();
-                        }
+                        //synchronized (serialConnector) {
+                        serialConnector.notify();
+                        //}
                     } else if (buf[0] == STX) {
                         stm.readBytes(buf, 1);
                         StringBuilder toPrint = new StringBuilder();
@@ -61,9 +61,9 @@ public class SerialConnector {
                         System.out.print(toPrint);
                     } else if ((buf[0] & RES) == RES) {
                         result = (byte) (buf[0] ^ RES);
-                        synchronized (serialConnector) {
-                            serialConnector.notify();
-                        }
+                        //synchronized (serialConnector) {
+                        serialConnector.notify();
+                        // }
                     }
 
                 }
@@ -163,7 +163,7 @@ public class SerialConnector {
         for (int i = 0; i < 4; i++)
             arr[i] = ByteBuffer.wrap(buffer, 2 * i, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
 
-        return new Color(Short.toUnsignedInt(arr[0]),Short.toUnsignedInt(arr[1]),Short.toUnsignedInt(arr[2]),Short.toUnsignedInt(arr[3]));
+        return new Color(Short.toUnsignedInt(arr[0]), Short.toUnsignedInt(arr[1]), Short.toUnsignedInt(arr[2]), Short.toUnsignedInt(arr[3]));
     }
 
     public synchronized float[] getTemps() {
