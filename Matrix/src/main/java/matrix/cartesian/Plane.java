@@ -9,6 +9,7 @@ public class Plane {
     private LinkedList<LinkedList<Cell>> matrixList = new LinkedList<>();
 
     public void move(int direction) {
+        LinkedList<Cell> now = matrixList.get();
         switch (direction) {
             case Matrix.NORTH:
                 p.y++;
@@ -17,6 +18,9 @@ public class Plane {
                 p.y--;
             case Matrix.EAST:
                 p.x++;
+                if (matrixList.getAfter() == null) {
+                    matrixList.setAfter(new LinkedList<>(now.getFrom(), now.getTo(), now.getPos()));
+                }
             case Matrix.WEST:
                 p.x--;
         }
@@ -27,9 +31,6 @@ public class Plane {
     }
 
     public void insert(Cell c) {
-        for (LinkedList<Cell> ics : matrixList) {
-
-        }
 //matrixList.get(x).set()
     }
 
