@@ -62,6 +62,10 @@ public class LinkedList<A> implements Iterable<A> {
         }
     }
 
+    public void set(A val) {
+        actual.value = val;
+    }
+
     public A get() {
         return actual.value;
     }
