@@ -48,9 +48,9 @@ public class SerialConnector {
                     stm.readBytes(buf, 1);
                     if (buf[0] == READY) {
                         ready = true;
-                        //synchronized (serialConnector) {
-                        serialConnector.notify();
-                        //}
+                        synchronized (serialConnector) {
+                            serialConnector.notify();
+                        }
                     } else if (buf[0] == STX) {
                         stm.readBytes(buf, 1);
                         StringBuilder toPrint = new StringBuilder();
@@ -61,9 +61,9 @@ public class SerialConnector {
                         System.out.print(toPrint);
                     } else if ((buf[0] & RES) == RES) {
                         result = (byte) (buf[0] ^ RES);
-                        //synchronized (serialConnector) {
-                        serialConnector.notify();
-                        // }
+                        synchronized (serialConnector) {
+                            serialConnector.notify();
+                        }
                     }
 
                 }
