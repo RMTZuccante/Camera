@@ -186,9 +186,10 @@ public class Matrix {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
                     if (tempw != -1) {
                         tempw += weights[i];
-                        if ((tempw - weights[i]) == 0 || weight == -1 || tempw < weight) {
+                        if ( weight == -1 || tempw < weight) {
                             weight = tempw;
                             pos = i;
+                            if((tempw - weights[i]) == 0) break;
                         }
                     }
                 }
