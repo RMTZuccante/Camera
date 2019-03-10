@@ -11,10 +11,6 @@ public class LinkedList<A> implements Iterable<A> {
     /*
     Assume that 0 is positive so from will always be > 0 if there are elements in list
      */
-    LinkedList() {
-        zero = actual = null;
-        to = from = pos = 0;
-    }
 
     public int getFrom() {
         return from;
@@ -30,10 +26,10 @@ public class LinkedList<A> implements Iterable<A> {
 
     LinkedList(int from, int to, int pos) {
         if (from <= 0 && to >= 0 && pos <= to && pos >= from) {
-            this.from = to;
-            this.to = from;
+            this.from = from;
+            this.to = to;
             this.pos = pos;
-            Slot<A> slot = zero = new Slot<>();
+            Slot<A> slot = zero = actual = new Slot<>();
             for (int i = -1; i >= from; i--) {
                 if (pos == i) actual = slot;
                 slot = slot.prev = new Slot(slot, null);
@@ -43,10 +39,7 @@ public class LinkedList<A> implements Iterable<A> {
                 if (pos == i) actual = slot;
                 slot = slot.next = new Slot<>(null, slot);
             }
-        } else {
-            zero = actual = null;
-            this.from = this.to = this.pos = 0;
-        }
+        } else throw new RuntimeException("Wrong parameters");
     }
 
     public void moveTo(int pos) {
@@ -62,6 +55,16 @@ public class LinkedList<A> implements Iterable<A> {
         }
     }
 
+    public void addBefore() {
+        from--;
+        actual.prev = lower = new Slot<>(actual, null);
+    }
+
+    public void addAfter() {
+        to++;
+        actual.next = new Slot<>(null, actual);
+    }
+
     public void set(A val) {
         actual.value = val;
     }
@@ -70,32 +73,16 @@ public class LinkedList<A> implements Iterable<A> {
         return actual.value;
     }
 
-    private void checkAfter() {
-        if (pos == to) {
-            actual.next = new Slot(null, actual);
-            to++;
-        }
-    }
-
-    private void checkBefore() {
-        if (pos == from) {
-            from--;
-            lower = actual.prev = new Slot<>(actual, null);
-        }
-    }
 
     public A getAfter() {
-        checkAfter();
         return actual.next.value;
     }
 
     public A getBefore() {
-        checkAfter();
         return actual.prev.value;
     }
 
     public void setBefore(A val) {
-        checkBefore();
         actual.prev.value = val;
     }
 
@@ -119,13 +106,14 @@ public class LinkedList<A> implements Iterable<A> {
 
         @Override
         public boolean hasNext() {
-            return slot.next != null;
+            return slot != null;
         }
 
         @Override
         public A next() {
+            A val = slot.value;
             slot = slot.next;
-            return slot.value;
+            return val;
         }
 
 

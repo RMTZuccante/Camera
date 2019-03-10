@@ -26,7 +26,6 @@ public class Matrix {
         this.maxWallDist = maxWallDist;
         this.bodyTemp = bodyTemp;
         direction = NORTH;
-        plane = new Plane();
         //coords = new Point(0, 0);
     }
 
@@ -44,6 +43,7 @@ public class Matrix {
         connector.setDebug((byte) 0);
 
         start = actual = new Cell();
+        plane = new Plane(start);
 
         while (true) {
             boolean victimfound = actual.victim != Victim.NONE;
@@ -244,16 +244,32 @@ public class Matrix {
 
     private void addCell(byte south, byte north, byte west, byte east) {
         if (direction == south && actual.north == null) {
-            actual.north = new Cell();
+            actual.north = plane.getNear(NORTH);
+            if (actual.north == null) {
+                actual.north = new Cell();
+                plane.setNear(NORTH, actual.north);
+            }
             actual.north.south = actual;
         } else if (direction == north && actual.south == null) {
-            actual.south = new Cell();
+            actual.south = plane.getNear(SOUTH);
+            if (actual.south == null) {
+                actual.south = new Cell();
+                plane.setNear(SOUTH, actual.south);
+            }
             actual.south.north = actual;
         } else if (direction == west && actual.east == null) {
-            actual.east = new Cell();
+            actual.east = plane.getNear(EAST);
+            if (actual.east == null) {
+                actual.east = new Cell();
+                plane.setNear(EAST, actual.east);
+            }
             actual.east.west = actual;
         } else if (direction == east && actual.west == null) {
-            actual.west = new Cell();
+            actual.west = plane.getNear(WEST);
+            if (actual.west == null) {
+                actual.west = new Cell();
+                plane.setNear(WEST, actual.west);
+            }
             actual.west.east = actual;
         }
     }

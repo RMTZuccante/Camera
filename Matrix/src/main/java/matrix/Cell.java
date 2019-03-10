@@ -7,7 +7,7 @@ public class Cell {
     boolean considered = false;
     int weight;
 
-    Cell() {
+    public Cell() {
         north = south = east = west = null;
         visited = mirror = black = false;
         victim = Victim.NONE;

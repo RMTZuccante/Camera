@@ -6,7 +6,12 @@ import matrix.Matrix;
 public class Plane {
 
     private Point p = new Point(0, 0);
-    private LinkedList<LinkedList<Cell>> matrixList = new LinkedList<>();
+    private LinkedList<LinkedList<Cell>> matrixList = new LinkedList<>(0, 0, 0);
+
+    public Plane(Cell cell) {
+        matrixList.set(new LinkedList<>(0, 0, 0));
+        matrixList.get().set(cell);
+    }
 
     public void move(int direction) {
         switch (direction) {
@@ -21,12 +26,15 @@ public class Plane {
                 for (LinkedList<Cell> x : matrixList) {
                     x.moveTo(p.y);
                 }
+                break;
             case Matrix.EAST:
                 p.x++;
                 matrixList.moveTo(p.x);
+                break;
             case Matrix.WEST:
                 p.x--;
                 matrixList.moveTo(p.x);
+                break;
         }
     }
 
@@ -42,41 +50,59 @@ public class Plane {
         return matrixList.get().get();
     }
 
-    public Cell getNear(int dir) {
+
+    public void setNear(int dir, Cell c) {
         switch (dir) {
             case Matrix.NORTH:
-                p.y++;
-                if (now.getAfter() == null) {
-                    for (LinkedList<Cell> x : matrixList) {
-                        x.setAfter(null);
-                    }
-                }
-                for (LinkedList<Cell> x : matrixList) {
-                    x.moveTo(p.y);
-                }
+                matrixList.get().setAfter(c);
                 break;
             case Matrix.SOUTH:
-                p.y--;
-                if (now.getBefore() == null) {
-                    for (LinkedList<Cell> x : matrixList) {
-                        x.setBefore(null);
+                matrixList.get().setBefore(c);
+                break;
+            case Matrix.EAST:
+                matrixList.getAfter().set(c);
+                break;
+            case Matrix.WEST:
+                matrixList.getBefore().set(c);
+                break;
+        }
+    }
+
+    public Cell getNear(int dir) {
+        LinkedList<Cell> now = matrixList.get();
+        Cell c = null;
+        switch (dir) {
+            case Matrix.NORTH:
+                if (now.getTo() < p.y + 1) {
+                    for (LinkedList<Cell> y : matrixList) {
+                        y.addAfter();
                     }
                 }
-                for (LinkedList<Cell> x : matrixList) {
-                    x.moveTo(p.y);
+                c = now.getAfter();
+                break;
+            case Matrix.SOUTH:
+                if (now.getFrom() > p.y - 1) {
+                    for (LinkedList<Cell> x : matrixList) {
+                        x.addBefore();
+                    }
                 }
+                c = now.getBefore();
+                break;
             case Matrix.EAST:
-                p.x++;
-                if (matrixList.getAfter() == null) {
+                if (matrixList.getTo() < p.x + 1) {
+                    matrixList.addAfter();
                     matrixList.setAfter(new LinkedList<>(now.getFrom(), now.getTo(), now.getPos()));
                 }
-                matrixList.moveTo(p.x);
+                c = matrixList.getAfter().get();
+                break;
             case Matrix.WEST:
-                p.x--;
-                if (matrixList.getBefore() == null) {
+                if (matrixList.getFrom() > p.y - 1) {
+                    matrixList.addBefore();
                     matrixList.setBefore(new LinkedList<>(now.getFrom(), now.getTo(), now.getPos()));
                 }
-                matrixList.moveTo(p.x);
+                c = matrixList.getBefore().get();
+                break;
         }
+        return c;
     }
 }
