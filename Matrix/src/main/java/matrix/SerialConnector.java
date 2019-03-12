@@ -17,12 +17,14 @@ public class SerialConnector {
     private byte[] buffer = new byte[10];
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
-    private byte result;
     private boolean ready;
+    private byte status;
+    private byte toRead;
 
     public SerialConnector(SerialPort stm, int baudRate) {
         this.stm = stm;
         this.ready = false;
+        this.status = -1;
 
         /*Try opening port*/
         stm.setBaudRate(baudRate);
@@ -43,15 +45,9 @@ public class SerialConnector {
             @Override
             public void serialEvent(SerialPortEvent event) {
                 byte[] buf = new byte[1];
-
                 while (stm.bytesAvailable() > 0) {
                     stm.readBytes(buf, 1);
-                    if (buf[0] == READY) {
-                        ready = true;
-                        synchronized (serialConnector) {
-                            serialConnector.notify();
-                        }
-                    } else if (buf[0] == STX) {
+                    if (buf[0] == STX) {
                         stm.readBytes(buf, 1);
                         StringBuilder toPrint = new StringBuilder();
                         while (buf[0] != ETX) {
@@ -59,20 +55,23 @@ public class SerialConnector {
                             stm.readBytes(buf, 1);
                         }
                         System.out.print(toPrint);
-                    } else if ((buf[0] & RES) == RES) {
-                        result = (byte) (buf[0] ^ RES);
+                    }
+                    else {
+                        if (buf[0] == READY) ready = true;
+                        else {
+                            status = (byte) ((buf[0] & RES) == RES ? buf[0] ^ RES : -buf[0]);
+                            if (toRead > 0) {
+                                stm.readBytes(buffer, toRead);
+                                toRead = 0;
+                            }
+                        }
                         synchronized (serialConnector) {
                             serialConnector.notify();
                         }
                     }
-
                 }
             }
         });
-    }
-
-    private void disableEvents() {
-        stm.removeDataListener();
     }
 
     /**
@@ -101,109 +100,105 @@ public class SerialConnector {
     }
 
     public synchronized void rotate(int angle, boolean right) {
-        waitForReady();
+        waitReady();
         buffer[0] = ROTATE;
         buffer[1] = (byte) (right ? 0 : 1);
         buffer[2] = (byte) angle;
         stm.writeBytes(buffer, 3);
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            System.err.println("Error while waiting for rotation end...");
-        }
+        waitResult();
     }
 
     public synchronized int go() {
-        waitForReady();
+        waitReady();
         buffer[0] = GO;
         stm.writeBytes(buffer, 1);
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            System.err.println("Error while waiting for rotation end...");
-        }
-        return result;
+        return waitResult();
     }
 
     public synchronized void victim(int packets) {
-        waitForReady();
+        waitReady();
         buffer[0] = VICTIM;
         buffer[1] = (byte) packets;
         stm.writeBytes(buffer, 2);
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            System.err.println("Error while waiting for rotation end...");
-        }
+        waitResult();
     }
 
     public synchronized short[] getDistances() {
-        waitForReady();
-        disableEvents();
-        int length = 2;
-        int num = 5;
+        waitReady();
+        toRead = 10;
         buffer[0] = GETDISTANCES;
         stm.writeBytes(buffer, 1);
-        stm.readBytes(buffer, length * num);
-        enableEvents();
-        short[] arr = new short[num];
-        for (int i = 0; i < num; i++)
-            arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getShort();
+        waitFor(GETDISTANCES);
+
+        short[] arr = new short[5];
+        for (int i = 0; i < 5; i++)
+            arr[i] = ByteBuffer.wrap(buffer, 2 * i, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
         return arr;
     }
 
     public synchronized Color getColor() {
-        waitForReady();
-        disableEvents();
+        waitReady();
+        toRead = 8;
         buffer[0] = GETCOLOR;
         stm.writeBytes(buffer, 1);
-        stm.readBytes(buffer, 8);
-        enableEvents();
+        waitFor(GETCOLOR);
+
         short[] arr = new short[4];
         for (int i = 0; i < 4; i++)
             arr[i] = ByteBuffer.wrap(buffer, 2 * i, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
-
         return new Color(Short.toUnsignedInt(arr[0]), Short.toUnsignedInt(arr[1]), Short.toUnsignedInt(arr[2]), Short.toUnsignedInt(arr[3]));
     }
 
     public synchronized float[] getTemps() {
-        waitForReady();
-        int length = 4;
-        int num = 2;
-        disableEvents();
+        waitReady();
+        toRead = 8;
         buffer[0] = GETTEMPS;
         stm.writeBytes(buffer, 1);
-        stm.readBytes(buffer, length * num);
-        enableEvents();
-        float[] arr = new float[num];
-        for (int i = 0; i < num; i++)
-            arr[i] = ByteBuffer.wrap(buffer, length * i, length).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+        waitFor(GETTEMPS);
+
+        float[] arr = new float[2];
+        for (int i = 0; i < 2; i++)
+            arr[i] = ByteBuffer.wrap(buffer, 4 * i, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
         return arr;
     }
 
     public synchronized void setDebug(byte level) {
-        waitForReady();
+        waitReady();
         buffer[0] = SETDEBUG;
         buffer[1] = level;
         stm.writeBytes(buffer, 2);
     }
 
     public synchronized void setBlackThreshold(byte blackThreshold) {
-        waitForReady();
+        waitReady();
         buffer[0] = SETBLACK;
         buffer[1] = blackThreshold;
         stm.writeBytes(buffer, 2);
     }
 
-    private synchronized void waitForReady() {
-        while (!ready) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                System.err.println("Error while waiting for the robot to be ready...");
-            }
-        }
+    private synchronized void waitFor(byte purpose) {
+        while (status != -purpose) waitTC();
+        status = -1;
+    }
+
+    private synchronized void waitReady() {
+        while(!ready) waitTC();
         ready = false;
+    }
+
+    private synchronized byte waitResult() {
+        while (status < 0) waitTC();
+        byte out = status;
+        status = -1;
+        return out;
+    }
+
+    private synchronized void waitTC() {
+        try {
+            wait();
+        } catch (InterruptedException e) {
+            System.err.println("Error while waiting for the robot to be ready...");
+        }
     }
 
     public String getConnectionInfo() {
