@@ -107,18 +107,18 @@ public class Matrix {
     }
 
     private void inspectCell() {
-        short[] distances = connector.getDistances();
+        Distances distances = connector.getDistances();
 
-        if (distances[DFRONTL] > maxWallDist) { //TODO bottle
+        if (distances.getFrontL() > maxWallDist) { //TODO bottle
             addFrontCell();
         }
-        if (distances[DLEFT] > maxWallDist) {
+        if (distances.getLeft() > maxWallDist) {
             addLeftCell();
         }
-        if (distances[DRIGHT] > maxWallDist) {
+        if (distances.getRight() > maxWallDist) {
             addRightCell();
         }
-        if (distances[DBACK] > maxWallDist) {
+        if (distances.getBack() > maxWallDist) {
             addBackCell();
         }
 
@@ -144,9 +144,9 @@ public class Matrix {
     }
 
     private boolean isVictim() {
-        float[] temps = connector.getTemps();
+        Temps temps = connector.getTemps();
         // TODO improve detections rules
-        return temps[TLEFT] > bodyTemp || temps[TRIGHT] > bodyTemp;
+        return temps.getLeft() > bodyTemp || temps.getRight() > bodyTemp;
     }
 
     private Direction nextDirection() {

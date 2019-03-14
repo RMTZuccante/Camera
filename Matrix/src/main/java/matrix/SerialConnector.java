@@ -8,10 +8,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class SerialConnector {
-    public final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9;
-    public final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
-    public final static int DFRONTL = 0, DFRONTR = 3, DRIGHT = 1, DLEFT = 2, DBACK = 4;
-    public final static int TLEFT = 0, TRIGHT = 1;
+    private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9;
+    private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
     public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
 
     private byte[] buffer = new byte[10];
@@ -123,7 +121,7 @@ public class SerialConnector {
         waitResult();
     }
 
-    public synchronized short[] getDistances() {
+    public synchronized Distances getDistances() {
         waitReady();
         toRead = 10;
         buffer[0] = GETDISTANCES;
@@ -133,7 +131,7 @@ public class SerialConnector {
         short[] arr = new short[5];
         for (int i = 0; i < 5; i++)
             arr[i] = ByteBuffer.wrap(buffer, 2 * i, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        return arr;
+        return new Distances(arr[0], arr[3], arr[2], arr[1], arr[4]);
     }
 
     public synchronized Color getColor() {
@@ -149,7 +147,7 @@ public class SerialConnector {
         return new Color(Short.toUnsignedInt(arr[0]), Short.toUnsignedInt(arr[1]), Short.toUnsignedInt(arr[2]), Short.toUnsignedInt(arr[3]));
     }
 
-    public synchronized float[] getTemps() {
+    public synchronized Temps getTemps() {
         waitReady();
         toRead = 8;
         buffer[0] = GETTEMPS;
@@ -159,7 +157,7 @@ public class SerialConnector {
         float[] arr = new float[2];
         for (int i = 0; i < 2; i++)
             arr[i] = ByteBuffer.wrap(buffer, 4 * i, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-        return arr;
+        return new Temps(arr[0], arr[1]);
     }
 
     public synchronized void setDebug(byte level) {
@@ -203,6 +201,79 @@ public class SerialConnector {
 
     public String getConnectionInfo() {
         return "Port: " + stm.getSystemPortName() + "\nBaud: " + stm.getBaudRate();
+    }
+
+    public class Distances {
+        private short frontL;
+        private short frontR;
+        private short left;
+        private short right;
+        private short back;
+
+        public Distances(short frontL, short frontR, short left, short right, short back) {
+            this.frontL = frontL;
+            this.frontR = frontR;
+            this.left = left;
+            this.right = right;
+            this.back = back;
+        }
+
+        public short getFrontL() {
+            return frontL;
+        }
+
+        public short getFrontR() {
+            return frontR;
+        }
+
+        public short getLeft() {
+            return left;
+        }
+
+        public short getRight() {
+            return right;
+        }
+
+        public short getBack() {
+            return back;
+        }
+
+        @Override
+        public String toString() {
+            return "Distances{" +
+                    "frontL=" + frontL +
+                    ", frontR=" + frontR +
+                    ", left=" + left +
+                    ", right=" + right +
+                    ", back=" + back +
+                    '}';
+        }
+    }
+
+    public class Temps {
+        private float left;
+        private float right;
+
+        public Temps(float left, float right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public float getLeft() {
+            return left;
+        }
+
+        public float getRight() {
+            return right;
+        }
+
+        @Override
+        public String toString() {
+            return "Temps{" +
+                    "left=" + left +
+                    ", right=" + right +
+                    '}';
+        }
     }
 
     public class Color {

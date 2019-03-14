@@ -35,13 +35,13 @@ public class SerialTest {
                     System.out.println("Go ended with code: "+stm.go());
                     break;
                 case "getdistances":
-                    System.out.println("Distances: "+ Arrays.toString(stm.getDistances()));
+                    System.out.println("Distances: "+ stm.getDistances());
                     break;
                 case "getcolor":
                     System.out.println("Color: "+stm.getColor());
                     break;
                 case "gettemps":
-                    System.out.println("Temperatures: "+Arrays.toString(stm.getTemps()));
+                    System.out.println("Temperatures: "+stm.getTemps());
                     break;
                 case "victim":
                     System.out.print("Packets: ");
