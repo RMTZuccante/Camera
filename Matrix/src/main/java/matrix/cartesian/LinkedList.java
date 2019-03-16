@@ -25,7 +25,7 @@ public class LinkedList<A> implements Iterable<A> {
     }
 
     LinkedList(int from, int to, int pos) {
-        if (from <= 0 && to >= 0 && pos <= to && pos >= from) {
+        if (from <= 0 && to >= 0) {
             this.from = from;
             this.to = to;
             this.pos = pos;
@@ -34,7 +34,8 @@ public class LinkedList<A> implements Iterable<A> {
                 if (pos == i) actual = slot;
                 slot = slot.prev = new Slot(slot, null);
             }
-            lower = slot = zero;
+            lower = slot;
+            slot = zero;
             for (int i = 0; i < to; i++) {
                 if (pos == i) actual = slot;
                 slot = slot.next = new Slot<>(null, slot);
@@ -120,7 +121,7 @@ public class LinkedList<A> implements Iterable<A> {
     }
 
     private class Slot<A> {
-        protected A value;
+        protected A value = null;
         protected Slot<A> next, prev;
 
         Slot() {

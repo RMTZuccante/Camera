@@ -96,7 +96,7 @@ public class Plane {
                 c = matrixList.getAfter().get();
                 break;
             case Matrix.WEST:
-                if (matrixList.getFrom() > p.y - 1) {
+                if (matrixList.getFrom() > p.x - 1) {
                     matrixList.addBefore();
                     matrixList.setBefore(new LinkedList<>(now.getFrom(), now.getTo(), now.getPos()));
                 }
