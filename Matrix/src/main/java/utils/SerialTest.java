@@ -58,6 +58,11 @@ public class SerialTest {
                     System.out.print("New black threshold: ");
                     sc.nextLine();
                     stm.setBlackThreshold(sc.nextByte());
+                    break;
+                case "reset":
+                    System.out.println("Resetting the robot...");
+                    stm.reset();
+                    break;
                 case "getconnectioninfo":
                     System.out.println(stm.getConnectionInfo());
                     break;
