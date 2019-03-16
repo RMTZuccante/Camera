@@ -8,8 +8,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class SerialConnector {
-    public final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET= 10;
-    public final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
+    private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET= 10;
+    private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
     public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
 
     private byte[] buffer = new byte[10];
