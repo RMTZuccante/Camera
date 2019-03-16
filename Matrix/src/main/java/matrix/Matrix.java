@@ -54,17 +54,21 @@ public class Matrix {
                     case BACK:
                         System.out.println("Go back");
                         connector.rotate(90);
+                        direction = getNewCardinalDirection(direction, Direction.RIGHT);
                         inspectCell();
                         connector.rotate(90);
+                        direction = getNewCardinalDirection(direction, Direction.RIGHT);
                         break;
                     case LEFT:
                         System.out.println("Go left");
                         connector.rotate(-90);
+                        direction = getNewCardinalDirection(direction, Direction.LEFT);
                         inspectCell();
                         break;
                     case RIGHT:
                         System.out.println("Go right");
                         connector.rotate(90);
+                        direction = getNewCardinalDirection(direction, Direction.RIGHT);
                         inspectCell();
                         break;
                     case FRONT:
@@ -85,8 +89,6 @@ public class Matrix {
 
 
                 System.out.println("\tGo!");
-                direction = getNewCardinalDirection(direction, dir);
-
                 go(true);
                 int goret = connector.go();
                 if (goret == GOBLACK) {
