@@ -111,19 +111,19 @@ public class Matrix {
 
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
             addFrontCell();
-            System.out.println("front cell");
+            System.out.println("front cell: " + distances.getFrontL());
         }
         if (distances.getLeft() > maxWallDist) {
             addLeftCell();
-            System.out.println("left cell");
+            System.out.println("left cell: " + distances.getLeft());
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
-            System.out.println("right cell");
+            System.out.println("right cell: " + distances.getRight());
         }
         if (distances.getBack() > maxWallDist) {
             addBackCell();
-            System.out.println("back cell");
+            System.out.println("back cell: " + distances.getBack());
         }
 
         actual.mirror = isMirror();
