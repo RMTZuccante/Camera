@@ -52,11 +52,9 @@ public class Matrix {
             if (dir != null) {
                 switch (dir) {
                     case BACK:
-                        System.out.println("Go back:");
-                        System.out.println("\tRotate right");
+                        System.out.println("Go back");
                         connector.rotate(90);
                         inspectCell();
-                        System.out.println("\tRotate right again");
                         connector.rotate(90);
                         break;
                     case LEFT:
@@ -70,7 +68,7 @@ public class Matrix {
                         inspectCell();
                         break;
                     case FRONT:
-                        System.out.println("Do not rotate");
+                        System.out.println("Go straight");
                         break;
 
                 }
@@ -86,7 +84,7 @@ public class Matrix {
                 }
 
 
-                System.out.println("Go straight");
+                System.out.println("\tGo!");
                 direction = getNewCardinalDirection(direction, dir);
 
                 go(true);
@@ -111,15 +109,19 @@ public class Matrix {
 
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
             addFrontCell();
+            System.out.println("front cell");
         }
         if (distances.getLeft() > maxWallDist) {
             addLeftCell();
+            System.out.println("left cell");
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
+            System.out.println("right cell");
         }
         if (distances.getBack() > maxWallDist) {
             addBackCell();
+            System.out.println("back cell");
         }
 
         actual.mirror = isMirror();
@@ -186,10 +188,10 @@ public class Matrix {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
                     if (tempw != -1) {
                         tempw += weights[i];
-                        if ( weight == -1 || tempw < weight) {
+                        if (weight == -1 || tempw < weight) {
                             weight = tempw;
                             pos = i;
-                            if((tempw - weights[i]) == 0) break;
+                            if ((tempw - weights[i]) == 0) break;
                         }
                     }
                 }
@@ -247,6 +249,7 @@ public class Matrix {
         if (direction == south && actual.north == null) {
             actual.north = plane.getNear(NORTH);
             if (actual.north == null) {
+                System.out.print("new ");
                 actual.north = new Cell();
                 plane.setNear(NORTH, actual.north);
             }
@@ -254,6 +257,7 @@ public class Matrix {
         } else if (direction == north && actual.south == null) {
             actual.south = plane.getNear(SOUTH);
             if (actual.south == null) {
+                System.out.print("new ");
                 actual.south = new Cell();
                 plane.setNear(SOUTH, actual.south);
             }
@@ -261,6 +265,7 @@ public class Matrix {
         } else if (direction == west && actual.east == null) {
             actual.east = plane.getNear(EAST);
             if (actual.east == null) {
+                System.out.print("new ");
                 actual.east = new Cell();
                 plane.setNear(EAST, actual.east);
             }
@@ -268,6 +273,7 @@ public class Matrix {
         } else if (direction == east && actual.west == null) {
             actual.west = plane.getNear(WEST);
             if (actual.west == null) {
+                System.out.print("new ");
                 actual.west = new Cell();
                 plane.setNear(WEST, actual.west);
             }
