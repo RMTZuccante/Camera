@@ -5,3 +5,4 @@ out/
 gradle/
 make-build-debug
 /train/__pycache__
+*/gradlew*
