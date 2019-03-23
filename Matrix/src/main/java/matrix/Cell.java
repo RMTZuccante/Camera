@@ -4,7 +4,7 @@ public class Cell {
     Cell north, south, east, west;
     boolean visited, mirror, black;
     Victim victim;
-    boolean considered = false;
+    boolean considered = false; //Needed for pathinding not to pass on the same cell while looking
     int weight;
 
     public Cell() {

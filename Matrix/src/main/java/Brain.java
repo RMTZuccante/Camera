@@ -70,7 +70,7 @@ public class Brain {
 
         stm = null;
         for (SerialPort p : SerialPort.getCommPorts()) {
-            if (p.getDescriptivePortName().equals("Maple")) {
+            if (p.getDescriptivePortName().contains("Maple")) {
                 stm = p;
                 break;
             }

@@ -3,23 +3,30 @@ package utils;
 import com.fazecast.jSerialComm.SerialPort;
 import matrix.SerialConnector;
 
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class SerialTest {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        SerialConnector stm;
+        SerialConnector stm = null;
 
-        if(args.length > 0) {
+        if (args.length > 0) {
             stm = new SerialConnector(SerialPort.getCommPort(args[0]), 115200);
-        }
-        else {
-            System.out.print("Port: ");
-            stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()), 115200);
+        } else {
+            for (SerialPort p : SerialPort.getCommPorts()) {
+                System.out.println('\t' + p.getDescriptivePortName());
+                if (p.getDescriptivePortName().contains("Maple")) {
+                    new SerialConnector(p, 115200);
+                    break;
+                }
+            }
+            if (stm == null) {
+                System.out.print("Port: ");
+                stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()), 115200);
+            }
         }
         System.out.println("Port opened.");
-        while(!stm.handShake()) System.out.println("Trying handshake...");
+        while (!stm.handShake()) System.out.println("Trying handshake...");
         System.out.println("Connected!");
 
         while (true) {
@@ -32,16 +39,16 @@ public class SerialTest {
                     System.out.println("Rotate ended.");
                     break;
                 case "go":
-                    System.out.println("Go ended with code: "+stm.go());
+                    System.out.println("Go ended with code: " + stm.go());
                     break;
                 case "getdistances":
-                    System.out.println("Distances: "+ stm.getDistances());
+                    System.out.println("Distances: " + stm.getDistances());
                     break;
                 case "getcolor":
-                    System.out.println("Color: "+stm.getColor());
+                    System.out.println("Color: " + stm.getColor());
                     break;
                 case "gettemps":
-                    System.out.println("Temperatures: "+stm.getTemps());
+                    System.out.println("Temperatures: " + stm.getTemps());
                     break;
                 case "victim":
                     System.out.print("Packets: ");

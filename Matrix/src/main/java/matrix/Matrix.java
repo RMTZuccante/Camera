@@ -9,6 +9,7 @@ import static matrix.SerialConnector.*;
 
 public class Matrix {
     public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
+    private static final int[] weights = new int[]{0, 1, 1, 2}; //Constant weights for pathfinding
     private final Camera left, right;
     private byte direction;
     private SerialConnector connector;
@@ -26,7 +27,6 @@ public class Matrix {
         this.maxWallDist = maxWallDist;
         this.bodyTemp = bodyTemp;
         direction = NORTH;
-        //coords = new Point(0, 0);
     }
 
     public void start() {
@@ -109,6 +109,7 @@ public class Matrix {
     private void inspectCell() {
         Distances distances = connector.getDistances();
 
+        /*If there are no walls on some directions add a cell beside the actual one*/
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
             addFrontCell();
             System.out.println("front cell: " + distances.getFrontL());
@@ -128,7 +129,7 @@ public class Matrix {
 
         actual.mirror = isMirror();
         if (isVictim()) actual.victim = Victim.HEAT;
-        actual.visited = true;
+        actual.visited = true; //Mark the cell as visited
     }
 
     private void go(boolean forward) {
@@ -147,12 +148,19 @@ public class Matrix {
         return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
     }
 
+
     private boolean isVictim() {
         Temps temps = connector.getTemps();
         // TODO improve detections rules
         return temps.getLeft() > bodyTemp || temps.getRight() > bodyTemp;
     }
 
+    /**
+     * Returns the next direction to take, calls pathfinding if needed.
+     * It also checks if all the maze is visited
+     *
+     * @return Direction: the next direction to take
+     */
     private Direction nextDirection() {
         Direction dir = null;
         boolean gotNewDir = false;
@@ -175,35 +183,39 @@ public class Matrix {
         return dir;
     }
 
+    /**
+     * @param cell      the actual cell
+     * @param prev      the previews step (direction to assume)
+     * @param direction the cardinal direction
+     * @return int: the weight of the found path, -1 means that there are no path to new cells
+     */
     private int pathFinding(Cell cell, Step prev, byte direction) {
         int weight = -1;
-        if (cell != null && !cell.considered && !cell.black) {
-            if (cell.visited) {
-                cell.considered = true;
-
-                Step[] steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)};
-                byte[] cardinals = new byte[]{direction, getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.BACK)};
-                int[] weights = new int[]{0, 1, 1, 2};
-                int pos = -1;
+        if (cell != null && !cell.considered && !cell.black) { //If the cell doesn't exists (wall), it has already been considered or is black return the weight (-1), else calculate a path
+            if (cell.visited) { //If the cell is already visited keep looking
+                cell.considered = true; //Mark the cell as considered
+                Step[] steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)}; //Directions ordered to check the path
+                byte[] cardinals = new byte[]{direction, getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.BACK)}; //Set cardinal directions
+                int pos = -1; //Index of found shortest path to new cell
 
                 for (int i = 0; i < 4; i++) {
-                    int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]);
-                    if (tempw != -1) {
-                        tempw += weights[i];
-                        if (weight == -1 || tempw < weight) {
+                    int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]); //Temporary weight of calculated path
+                    if (tempw != -1) { //If the calculated path found a new cell
+                        tempw += weights[i]; //Add the rotation weight to tempw
+                        if (weight == -1 || tempw < weight) { //If the new path is worth update values
                             weight = tempw;
                             pos = i;
-                            if ((tempw - weights[i]) == 0) break;
+                            if ((tempw - weights[i]) == 0) break; //If new path's weight (without the rotation weight) is 0 that means that a new cell is near the actual so this path can be considered as the best
                         }
                     }
                 }
 
-                if (weight != -1) {
+                if (weight != -1) { //If a new path has been found add the actual cell's weight and add the direction
                     weight += cell.weight;
                     prev.next = steps[pos];
                 }
-                cell.considered = false;
-            } else {
+                cell.considered = false; //Set considered to false so new paths can be calculated through this cell
+            } else { //If the cell isn't visited yet set the weight to 0
                 weight = 0;
                 prev.next = null;
             }
