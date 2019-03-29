@@ -13,15 +13,6 @@ repositories {
     mavenCentral()
 }
 
-task fatJar(type: Jar) {
-    manifest {
-        attributes 'Main-Class': 'Brain'
-    }
-    baseName = 'Brain'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
-
 dependencies {
     compile "org.deeplearning4j:deeplearning4j-core:1.0.0-beta3"
     compile "org.deeplearning4j:deeplearning4j-modelimport:1.0.0-beta3"

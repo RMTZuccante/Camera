@@ -17,14 +17,25 @@ public class ModelLoader {
                 throw new ModelLoaderException("Error loading model: " + e.getMessage());
             }
         } else {
-            throw new ModelLoaderException("Model file does not exists or cannot be read");
+            throw new ModelLoaderException("Model file does not exists or cannot be read", false);
         }
         return model;
     }
 
     public static class ModelLoaderException extends Exception {
+        private boolean critic = true;
+
         ModelLoaderException(String msg) {
             super(msg);
+        }
+
+        ModelLoaderException(String msg, boolean critic) {
+            super(msg);
+            this.critic = critic;
+        }
+
+        public boolean isCritic() {
+            return critic;
         }
     }
 }

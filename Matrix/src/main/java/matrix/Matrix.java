@@ -205,7 +205,8 @@ public class Matrix {
                         if (weight == -1 || tempw < weight) { //If the new path is worth update values
                             weight = tempw;
                             pos = i;
-                            if ((tempw - weights[i]) == 0) break; //If new path's weight (without the rotation weight) is 0 that means that a new cell is near the actual so this path can be considered as the best
+                            if ((tempw - weights[i]) == 0)
+                                break; //If new path's weight (without the rotation weight) is 0 that means that a new cell is near the actual so this path can be considered as the best
                         }
                     }
                 }

@@ -45,7 +45,7 @@ public class Brain {
                     model = ModelLoader.loadModel(modelpath);
                 } catch (ModelLoader.ModelLoaderException e) {
                     e.printStackTrace();
-                    System.exit(-1);
+                    if (e.isCritic()) System.exit(-1);
                 }
 
                 if (model != null) {
