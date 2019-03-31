@@ -1,10 +1,10 @@
+import camera.Camera;
+import camera.ModelLoader;
 import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import camera.Camera;
-import camera.ModelLoader;
 import matrix.Matrix;
 import matrix.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -44,7 +44,7 @@ public class Brain {
                 try {
                     model = ModelLoader.loadModel(modelpath);
                 } catch (ModelLoader.ModelLoaderException e) {
-                    e.printStackTrace();
+                    System.out.println(e.getMessage());
                     if (e.isCritic()) System.exit(-1);
                 }
 
@@ -68,25 +68,12 @@ public class Brain {
             System.exit(-1);
         }
 
-        stm = null;
-        for (SerialPort p : SerialPort.getCommPorts()) {
-            if (p.getDescriptivePortName().contains("Maple")) {
-                stm = p;
-                break;
-            }
+        stm = SerialPort.getCommPort("ttyAMA0");
+        if (args.length > 0) {
+            stm = SerialPort.getCommPort(args[0]);
         }
 
-        if (stm == null) {
-            System.err.println("Cannot find serial port connected to Maple, trying with args");
-            if (args.length > 0) {
-                stm = SerialPort.getCommPort(args[0]);
-            } else {
-                System.err.println("No serial port provided");
-                System.exit(-1);
-            }
-        }
-
-        System.out.println("Ready to start");
+        System.out.println("Using " + stm.getSystemPortName());
         SerialConnector c = new SerialConnector(stm, 115200);
         Matrix m = new Matrix(c, left, right, distwall, bodytemp);
         Runtime.getRuntime().addShutdownHook(shutdown);

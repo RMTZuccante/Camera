@@ -6,9 +6,10 @@ import com.fazecast.jSerialComm.SerialPortEvent;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Random;
 
 public class SerialConnector {
-    private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET= 10;
+    private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET = 10;
     private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
     public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
 
@@ -53,8 +54,7 @@ public class SerialConnector {
                             stm.readBytes(buf, 1);
                         }
                         System.out.print(toPrint);
-                    }
-                    else {
+                    } else {
                         if (buf[0] == READY) ready = true;
                         else {
                             status = (byte) ((buf[0] & RES) == RES ? buf[0] ^ RES : -buf[0]);
@@ -77,14 +77,23 @@ public class SerialConnector {
      */
     public synchronized boolean handShake() {
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
-        byte n = 24;
+        Random r = new Random();
+        byte[] b = new byte[1];
+        r.nextBytes(b);
         buffer[0] = HANDSHAkE;
-        buffer[1] = n;
+        buffer[1] = b[0];
         stm.writeBytes(buffer, 2);
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-        boolean success = recv == 1 && buffer[0] == (byte) (n * 2);
-        if (success) enableEvents();
+        boolean success = recv == 1 && buffer[0] == (byte) (b[0] * 2);
+        if (success) {
+            buffer[0] = (byte) (b[0] / 2 + 5);
+            stm.writeBytes(buffer, 1);
+            enableEvents();
+        } else {
+            buffer[0] = 0;
+            stm.writeBytes(buffer, 1);
+        }
         return success;
     }
 
@@ -186,7 +195,7 @@ public class SerialConnector {
     }
 
     private synchronized void waitReady() {
-        while(!ready) waitTC();
+        while (!ready) waitTC();
         ready = false;
     }
 
