@@ -86,14 +86,6 @@ public class SerialConnector {
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
         boolean success = recv == 1 && buffer[0] == (byte) (b[0] * 2);
-        if (success) {
-            buffer[0] = (byte) (b[0] / 2 + 5);
-            stm.writeBytes(buffer, 1);
-            enableEvents();
-        } else {
-            buffer[0] = 0;
-            stm.writeBytes(buffer, 1);
-        }
         return success;
     }
 

@@ -21,3 +21,11 @@ dependencies {
     compile "com.fazecast:jSerialComm:[2.0.0,3.0.0]"
     compile "com.google.code.gson:gson:2.8.5"
 }
+
+task SerialTest(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'utils.SerialTest'
+    }
+    baseName = 'SerialTest'
+    with jar
+}
