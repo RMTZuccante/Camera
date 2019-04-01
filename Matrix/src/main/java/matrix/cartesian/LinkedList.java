@@ -5,46 +5,46 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 
 public class LinkedList<A> implements Iterable<A> {
-    private Slot<A> zero, actual, lower;
-    private int from, to, pos;
+    private Slot<A> actual, lower;
+    private int negativeBound, positiveBound, pos;
 
     /*
-    Assume that 0 is positive so from will always be > 0 if there are elements in list
+    Assume that 0 is positive so 'negativeBound' will always be < 0 if there are elements in list
      */
-
-    public int getFrom() {
-        return from;
-    }
-
-    public int getTo() {
-        return to;
-    }
-
-    public int getPos() {
-        return pos;
-    }
-
-    LinkedList(int from, int to, int pos) {
-        if (from <= 0 && to >= 0) {
-            this.from = from;
-            this.to = to;
+    LinkedList(int negativeBound, int positiveBound, int pos) {
+        if (negativeBound <= 0 && positiveBound >= 0 && pos >= negativeBound && pos <= positiveBound) {
+            this.negativeBound = negativeBound;
+            this.positiveBound = positiveBound;
             this.pos = pos;
-            Slot<A> slot = zero = actual = new Slot<>();
-            for (int i = -1; i >= from; i--) {
+            Slot<A> slot, zero;
+            slot = zero = actual = new Slot<>();
+            for (int i = -1; i >= negativeBound; i--) {
                 if (pos == i) actual = slot;
                 slot = slot.prev = new Slot(slot, null);
             }
             lower = slot;
             slot = zero;
-            for (int i = 0; i < to; i++) {
+            for (int i = 0; i < positiveBound; i++) {
                 if (pos == i) actual = slot;
                 slot = slot.next = new Slot<>(null, slot);
             }
         } else throw new RuntimeException("Wrong parameters");
     }
 
+    public int getNegativeBound() {
+        return negativeBound;
+    }
+
+    public int getPositiveBound() {
+        return positiveBound;
+    }
+
+    public int getPos() {
+        return pos;
+    }
+
     public void moveTo(int pos) {
-        if (pos > to || pos < from) throw new IndexOutOfBoundsException("Moving out of list");
+        if (pos > positiveBound || pos < negativeBound) throw new IndexOutOfBoundsException("Moving out of list");
         else while (this.pos != pos) {
             if (pos > this.pos) {
                 this.pos++;
@@ -56,13 +56,15 @@ public class LinkedList<A> implements Iterable<A> {
         }
     }
 
-    public void addBefore() {
-        from--;
+    public void addBottom() {
+        if (pos != negativeBound) throw new RuntimeException("Inserting element to bottom but position is higher");
+        negativeBound--;
         actual.prev = lower = new Slot<>(actual, null);
     }
 
-    public void addAfter() {
-        to++;
+    public void addTop() {
+        if (pos != positiveBound) throw new RuntimeException("Inserting element to top but position is lower");
+        positiveBound++;
         actual.next = new Slot<>(null, actual);
     }
 
@@ -79,16 +81,16 @@ public class LinkedList<A> implements Iterable<A> {
         return actual.next.value;
     }
 
+    public void setAfter(A val) {
+        actual.next.value = val;
+    }
+
     public A getBefore() {
         return actual.prev.value;
     }
 
     public void setBefore(A val) {
         actual.prev.value = val;
-    }
-
-    public void setAfter(A val) {
-        actual.next.value = val;
     }
 
     @NotNull
@@ -126,12 +128,6 @@ public class LinkedList<A> implements Iterable<A> {
 
         Slot() {
 
-        }
-
-        public Slot(A value, Slot next, Slot prev) {
-            this.value = value;
-            this.next = next;
-            this.prev = prev;
         }
 
         Slot(Slot next, Slot prev) {

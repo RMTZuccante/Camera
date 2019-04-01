@@ -5,7 +5,7 @@ import matrix.Matrix;
 
 public class Plane {
 
-    private Point p = new Point(0, 0);
+    private Point p = new Point(0, 0); // p.x = matrixList.pos, p.y = matrixList.get().pos
     private LinkedList<LinkedList<Cell>> matrixList = new LinkedList<>(0, 0, 0);
 
     public Plane(Cell cell) {
@@ -13,18 +13,18 @@ public class Plane {
         matrixList.get().set(cell);
     }
 
-    public void move(int direction) {
+    public void move(byte direction) {
         switch (direction) {
             case Matrix.NORTH:
                 p.y++;
-                for (LinkedList<Cell> x : matrixList) {
-                    x.moveTo(p.y);
+                for (LinkedList<Cell> y: matrixList) {
+                    y.moveTo(p.y);
                 }
                 break;
             case Matrix.SOUTH:
                 p.y--;
-                for (LinkedList<Cell> x : matrixList) {
-                    x.moveTo(p.y);
+                for (LinkedList<Cell> y : matrixList) {
+                    y.moveTo(p.y);
                 }
                 break;
             case Matrix.EAST:
@@ -73,32 +73,32 @@ public class Plane {
         Cell c = null;
         switch (dir) {
             case Matrix.NORTH:
-                if (now.getTo() < p.y + 1) {
+                if (now.getPositiveBound() < p.y + 1) {
                     for (LinkedList<Cell> y : matrixList) {
-                        y.addAfter();
+                        y.addTop();
                     }
                 }
                 c = now.getAfter();
                 break;
             case Matrix.SOUTH:
-                if (now.getFrom() > p.y - 1) {
-                    for (LinkedList<Cell> x : matrixList) {
-                        x.addBefore();
+                if (now.getNegativeBound() > p.y - 1) {
+                    for (LinkedList<Cell> y : matrixList) {
+                        y.addBottom();
                     }
                 }
                 c = now.getBefore();
                 break;
             case Matrix.EAST:
-                if (matrixList.getTo() < p.x + 1) {
-                    matrixList.addAfter();
-                    matrixList.setAfter(new LinkedList<>(now.getFrom(), now.getTo(), now.getPos()));
+                if (matrixList.getPositiveBound() < p.x + 1) {
+                    matrixList.addTop();
+                    matrixList.setAfter(new LinkedList<>(now.getNegativeBound(), now.getPositiveBound(), now.getPos()));
                 }
                 c = matrixList.getAfter().get();
                 break;
             case Matrix.WEST:
-                if (matrixList.getFrom() > p.x - 1) {
-                    matrixList.addBefore();
-                    matrixList.setBefore(new LinkedList<>(now.getFrom(), now.getTo(), now.getPos()));
+                if (matrixList.getNegativeBound() > p.x - 1) {
+                    matrixList.addBottom();
+                    matrixList.setBefore(new LinkedList<>(now.getNegativeBound(), now.getPositiveBound(), now.getPos()));
                 }
                 c = matrixList.getBefore().get();
                 break;

@@ -138,7 +138,7 @@ public class Matrix {
         } else {
             actual = getCellByCardinalDirection(actual, getNewCardinalDirection(direction, Direction.BACK));
         }
-        int dir = forward ? direction : getNewCardinalDirection(direction, Direction.BACK);
+        byte dir = forward ? direction : getNewCardinalDirection(direction, Direction.BACK);
         plane.move(dir);
     }
 
