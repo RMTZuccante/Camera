@@ -77,15 +77,14 @@ public class SerialConnector {
      */
     public synchronized boolean handShake() {
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
-        Random r = new Random();
-        byte[] b = new byte[1];
-        r.nextBytes(b);
+        byte n = (byte)(new Random().nextInt(128));
         buffer[0] = HANDSHAkE;
-        buffer[1] = b[0];
+        buffer[1] = n;
         stm.writeBytes(buffer, 2);
         int recv = stm.readBytes(buffer, 1);
         stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
-        boolean success = recv == 1 && buffer[0] == (byte) (b[0] * 2);
+        boolean success = (recv == 1) && (buffer[0] == n * 2);
+        if (success) enableEvents();
         return success;
     }
 
