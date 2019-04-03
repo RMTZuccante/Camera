@@ -1,16 +1,19 @@
 package matrix;
 
 import camera.Camera;
+import camera.Frame;
 import matrix.Cell.Victim;
 import matrix.SerialConnector.*;
 import matrix.cartesian.Plane;
+
+import java.io.IOException;
 
 import static matrix.SerialConnector.*;
 
 public class Matrix {
     public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     private static final int[] weights = new int[]{0, 1, 1, 2}; //Constant weights for pathfinding
-    private final Camera left, right;
+    private Camera left, right;
     private byte direction;
     private SerialConnector connector;
     private int maxWallDist;
@@ -104,6 +107,42 @@ public class Matrix {
                 break;
             }
         }
+    }
+
+    private Frame.Pair<Victim, Camera> foo() {
+        Victim v = Victim.NONE;
+        Camera cam = null;
+        if (left != null && left.isOpened()) {
+            try {
+                char c = left.capture().predict();
+                if (c != 0) {
+                    cam = left;
+                    v = Victim.valueOf("" + c);
+                }
+            } catch (IOException e) {
+                System.err.println("Error getting frame from left camera");
+                left.close();
+                left = null;
+            } catch (IllegalArgumentException e) {
+                v = Victim.NONE;
+            }
+        }
+        if (right != null && right.isOpened()) {
+            try {
+                char c = right.capture().predict();
+                if (c != 0) {
+                    cam = right;
+                    v = Victim.valueOf("" + c);
+                }
+            } catch (IOException e) {
+                System.err.println("Error getting frame from right camera");
+                right.close();
+                right = null;
+            } catch (IllegalArgumentException e) {
+                v = Victim.NONE;
+            }
+        }
+        return new Frame.Pair<>(v, cam);
     }
 
     private void inspectCell() {

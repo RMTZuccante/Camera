@@ -80,7 +80,7 @@ public class Frame extends Mat {
         return new Pair<>(candidates, gray);
     }
 
-    public class Pair<A, B> {
+    public static class Pair<A, B> {
         public A first;
         public B second;
 

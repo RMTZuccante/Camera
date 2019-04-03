@@ -9,10 +9,9 @@ import java.nio.ByteOrder;
 import java.util.Random;
 
 public class SerialConnector {
+    public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
     private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET = 10;
     private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
-    public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
-
     private byte[] buffer = new byte[10];
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
@@ -76,15 +75,19 @@ public class SerialConnector {
      * Send the HANDSHAKE command and a number, the expected response is 2 times the number
      */
     public synchronized boolean handShake() {
-        stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 500, 0);
-        byte n = (byte)(new Random().nextInt(128));
+        stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 700, 0);
+        byte n = (byte) (new Random().nextInt(128));
         buffer[0] = HANDSHAkE;
         buffer[1] = n;
         stm.writeBytes(buffer, 2);
         int recv = stm.readBytes(buffer, 1);
-        stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
         boolean success = (recv == 1) && (buffer[0] == n * 2);
-        if (success) enableEvents();
+        if (success) {
+            buffer[0] = (byte) ('k' + n);
+            stm.writeBytes(buffer, 1);
+            stm.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+            enableEvents();
+        }
         return success;
     }
 
