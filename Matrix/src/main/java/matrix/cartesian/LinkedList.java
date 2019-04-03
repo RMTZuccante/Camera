@@ -19,8 +19,8 @@ public class LinkedList<A> implements Iterable<A> {
             Slot<A> slot, zero;
             slot = zero = actual = new Slot<>();
             for (int i = -1; i >= negativeBound; i--) {
-                if (pos == i) actual = slot;
                 slot = slot.prev = new Slot(slot, null);
+                if (pos == i) actual = slot;
             }
             lower = slot;
             slot = zero;
