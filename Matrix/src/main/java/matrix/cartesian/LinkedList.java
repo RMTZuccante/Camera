@@ -24,9 +24,9 @@ public class LinkedList<A> implements Iterable<A> {
             }
             lower = slot;
             slot = zero;
-            for (int i = 0; i < positiveBound; i++) {
-                if (pos == i) actual = slot;
+            for (int i = 1; i <= positiveBound; i++) {
                 slot = slot.next = new Slot<>(null, slot);
+                if (pos == i) actual = slot;
             }
         } else throw new RuntimeException("Wrong parameters");
     }
