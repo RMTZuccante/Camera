@@ -20,6 +20,9 @@ public class Matrix {
     private Cell start, actual;
     private float bodyTemp;
     private Plane plane;
+    private RisingCell lastclimb = null;
+
+    private boolean climbing = false;
 
     private Step firstStep = new Step();
 
@@ -98,10 +101,36 @@ public class Matrix {
                     actual.black = true;
                     firstStep.next = null;
                     go(false);
-                } else {
-                    if (goret == GOOBSTACLE) actual.weight = 10;
-                    if (goret == GORISE) actual = new RisingCell(actual, plane); //TODO check if still climbing
-                }
+                } else if (goret == GOOBSTACLE) actual.weight = 10;
+                else if (goret == GORISE) {
+                    if (climbing) { //Fake end of climb detection
+                        actual = lastclimb;
+                        plane = new Plane(actual);
+                        ((RisingCell) (actual)).setNewFloor(plane);
+                        switch (direction) {
+                            case NORTH:
+                                actual.north = null;
+                                break;
+                            case SOUTH:
+                                actual.south = null;
+                                break;
+                            case EAST:
+                                actual.east = null;
+                                break;
+                            case WEST:
+                                actual.west = null;
+                                break;
+                        }
+                    } else if (actual instanceof RisingCell) {
+                        plane = ((RisingCell) (actual)).getOtherFloor(plane);
+                        lastclimb = (RisingCell) actual;
+                    } else {
+                        actual = new RisingCell(actual, plane); //TODO check if still climbing
+                        plane = new Plane(actual);
+                        ((RisingCell) (actual)).setNewFloor(plane);
+                        lastclimb = (RisingCell) actual;
+                    }
+                } else climbing = false;
             } else {
                 System.out.println("Finished! MISSION COMPLETED!");
                 break;

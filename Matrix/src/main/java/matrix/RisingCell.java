@@ -22,4 +22,9 @@ public class RisingCell extends Cell {
     public Plane getOtherFloor(Plane actual) {
         return floors[0] == actual ? floors[1] : floors[0];
     }
+
+    public void setNewFloor(Plane floor) {
+        if (floor != floors[0]) floors[1] = floor;
+        else throw new RuntimeException("Given floor is the same as starting floor");
+    }
 }
