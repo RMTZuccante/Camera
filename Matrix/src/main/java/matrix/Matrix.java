@@ -100,7 +100,7 @@ public class Matrix {
                     go(false);
                 } else {
                     if (goret == GOOBSTACLE) actual.weight = 10;
-                    if (goret == GORISE) actual.weight = 20;
+                    if (goret == GORISE) actual = new RisingCell(actual, plane); //TODO check if still climbing
                 }
             } else {
                 System.out.println("Finished! MISSION COMPLETED!");
