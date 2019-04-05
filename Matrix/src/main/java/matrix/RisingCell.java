@@ -27,4 +27,8 @@ public class RisingCell extends Cell {
         if (floor != floors[0]) floors[1] = floor;
         else throw new RuntimeException("Given floor is the same as starting floor");
     }
+
+    public String getFloorId(Plane floor) {
+        return this.hashCode() + "" + (floor == floors[0] ? 0 : 1);
+    }
 }
