@@ -50,6 +50,8 @@ public class SerialTest {
                 case "gettemps":
                     System.out.println("Temperatures: " + stm.getTemps());
                     break;
+                case "getinclination":
+                    System.out.println("Inclination: " + stm.getInclination());
                 case "victim":
                     System.out.print("Packets: ");
                     stm.victim(sc.nextInt());
