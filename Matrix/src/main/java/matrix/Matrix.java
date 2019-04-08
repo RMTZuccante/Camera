@@ -2,9 +2,11 @@ package matrix;
 
 import camera.Camera;
 import camera.Frame;
-import matrix.Cell.Victim;
 import matrix.SerialConnector.*;
 import matrix.cartesian.Plane;
+import matrix.cell.Cell;
+import matrix.cell.Cell.Victim;
+import matrix.cell.RisingCell;
 
 import java.io.IOException;
 
@@ -20,6 +22,7 @@ public class Matrix {
     private Cell start, actual;
     private float bodyTemp;
     private Plane plane;
+    private Cell lastMirror;
 
     private Step firstStep = new Step();
 
@@ -33,7 +36,13 @@ public class Matrix {
     }
 
     public void start() {
+        int i = 0;
         while (!connector.handShake()) {
+            if (++i > 10) {
+                i = 0;
+                System.out.println("10 handshake failed attemps, resetting STM");
+                connector.reset();
+            }
             System.err.println("Handshake failed!");
             try {
                 Thread.sleep(1000);
@@ -45,11 +54,11 @@ public class Matrix {
 
         connector.setDebug((byte) 0);
 
-        start = actual = new Cell();
+        start = actual = lastMirror = new Cell();
         plane = new Plane(start);
 
         while (true) {
-            boolean victimfound = actual.victim != Victim.NONE;
+            boolean victimfound = actual.getVictim() != Victim.NONE;
             inspectCell();
             Direction dir = nextDirection();
             if (dir != null) {
@@ -79,12 +88,12 @@ public class Matrix {
                         break;
 
                 }
-                if (actual.victim != Victim.NONE && !victimfound) {
+                if (actual.getVictim() != Victim.NONE && !victimfound) {
                     int packages = 0;
 
-                    if (actual.victim == Victim.HEAT || actual.victim == Victim.S) {
+                    if (actual.getVictim() == Victim.HEAT || actual.getVictim() == Victim.S) {
                         packages = 1;
-                    } else if (actual.victim == Victim.H) {
+                    } else if (actual.getVictim() == Victim.H) {
                         packages = 2;
                     }
                     connector.victim(packages);
@@ -95,7 +104,7 @@ public class Matrix {
                 go(true);
                 int goret = connector.go();
                 if (goret == GOBLACK) {
-                    actual.black = true;
+                    actual.setBlack(true);
                     firstStep.next = null;
                     go(false);
                 } else if (goret == GOOBSTACLE) actual.weight = 10;
@@ -175,8 +184,8 @@ public class Matrix {
             System.out.println("back cell: " + distances.getBack());
         }
 
-        actual.mirror = isMirror();
-        if (isVictim()) actual.victim = Victim.HEAT;
+        actual.setMirror(isMirror());
+        if (isVictim()) actual.setVictim(Victim.HEAT);
         actual.visited = true; //Mark the cell as visited
     }
 
@@ -239,7 +248,7 @@ public class Matrix {
      */
     private int pathFinding(Cell cell, Step prev, byte direction) {
         int weight = -1;
-        if (cell != null && !cell.considered && !cell.black) { //If the cell doesn't exists (wall), it has already been considered or is black return the weight (-1), else calculate a path
+        if (cell != null && !cell.considered && !cell.isBlack()) { //If the cell doesn't exists (wall), it has already been considered or is black return the weight (-1), else calculate a path
             if (cell.visited) { //If the cell is already visited keep looking
                 cell.considered = true; //Mark the cell as considered
                 Step[] steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)}; //Directions ordered to check the path
@@ -274,10 +283,10 @@ public class Matrix {
 
     private Cell getCellByCardinalDirection(Cell cell, byte dir) {
         Cell c;
-        if (dir == NORTH) c = cell.north;
-        else if (dir == SOUTH) c = cell.south;
-        else if (dir == EAST) c = cell.east;
-        else c = cell.west;
+        if (dir == NORTH) c = cell.getNorth();
+        else if (dir == SOUTH) c = cell.getSouth();
+        else if (dir == EAST) c = cell.getEast();
+        else c = cell.getWest();
         return c;
     }
 
@@ -309,39 +318,58 @@ public class Matrix {
     }
 
     private void addCell(byte south, byte north, byte west, byte east) {
-        if (direction == south && actual.north == null) {
-            actual.north = plane.getNear(NORTH);
-            if (actual.north == null) {
+        if (direction == south && actual.getNorth() == null) {
+            actual.setNorth(plane.getNear(NORTH));
+            if (actual.getNorth() == null) {
                 System.out.print("new ");
-                actual.north = new Cell();
-                plane.setNear(NORTH, actual.north);
+                actual.setNorth(new Cell());
+                plane.setNear(NORTH, actual.getNorth());
             }
-            actual.north.south = actual;
-        } else if (direction == north && actual.south == null) {
-            actual.south = plane.getNear(SOUTH);
-            if (actual.south == null) {
+            actual.getNorth().setSouth(actual);
+        } else if (direction == north && actual.getSouth() == null) {
+            actual.setSouth(plane.getNear(SOUTH));
+            if (actual.getSouth() == null) {
                 System.out.print("new ");
-                actual.south = new Cell();
-                plane.setNear(SOUTH, actual.south);
+                actual.setSouth(new Cell());
+                plane.setNear(SOUTH, actual.getSouth());
             }
-            actual.south.north = actual;
-        } else if (direction == west && actual.east == null) {
-            actual.east = plane.getNear(EAST);
-            if (actual.east == null) {
+            actual.getSouth().setNorth(actual);
+        } else if (direction == west && actual.getEast() == null) {
+            actual.setEast(plane.getNear(EAST));
+            if (actual.getEast() == null) {
                 System.out.print("new ");
-                actual.east = new Cell();
-                plane.setNear(EAST, actual.east);
+                actual.setEast(new Cell());
+                plane.setNear(EAST, actual.getEast());
             }
-            actual.east.west = actual;
-        } else if (direction == east && actual.west == null) {
-            actual.west = plane.getNear(WEST);
-            if (actual.west == null) {
+            actual.getEast().setWest(actual);
+        } else if (direction == east && actual.getWest() == null) {
+            actual.setWest(plane.getNear(WEST));
+            if (actual.getWest() == null) {
                 System.out.print("new ");
-                actual.west = new Cell();
-                plane.setNear(WEST, actual.west);
+                actual.setWest(new Cell());
+                plane.setNear(WEST, actual.getWest());
             }
-            actual.west.east = actual;
+            actual.getWest().setEast(actual);
         }
+    }
+
+    private Direction not(Direction d) {
+        Direction dir = null;
+        switch (d) {
+            case BACK:
+                dir = Direction.FRONT;
+                break;
+            case FRONT:
+                dir = Direction.BACK;
+                break;
+            case LEFT:
+                dir = Direction.RIGHT;
+                break;
+            case RIGHT:
+                dir = Direction.LEFT;
+                break;
+        }
+        return dir;
     }
 
     enum Direction {

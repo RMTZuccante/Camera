@@ -1,11 +1,12 @@
-package matrix;
+package matrix.cell;
 
 import matrix.cartesian.Plane;
+import matrix.cell.Cell;
 
 public class RisingCell extends Cell {
     private Plane[] floors = new Plane[2];
 
-    RisingCell(Cell c, Plane plane) {
+    public RisingCell(Cell c, Plane plane) {
         super(c.north, c.south, c.east, c.west);
         victim = c.victim;
         visited = c.visited;

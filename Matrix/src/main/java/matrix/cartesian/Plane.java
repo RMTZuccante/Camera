@@ -1,7 +1,8 @@
 package matrix.cartesian;
 
-import matrix.Cell;
+import matrix.LinkedList;
 import matrix.Matrix;
+import matrix.cell.Cell;
 
 public class Plane {
 
@@ -17,7 +18,7 @@ public class Plane {
         switch (direction) {
             case Matrix.NORTH:
                 p.y++;
-                for (LinkedList<Cell> y: matrixList) {
+                for (LinkedList<Cell> y : matrixList) {
                     y.moveTo(p.y);
                 }
                 break;
@@ -48,6 +49,10 @@ public class Plane {
 
     public Cell get() {
         return matrixList.get().get();
+    }
+
+    public void remove() {
+        matrixList.get().set(null);
     }
 
 

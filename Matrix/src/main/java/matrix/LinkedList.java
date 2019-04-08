@@ -1,4 +1,4 @@
-package matrix.cartesian;
+package matrix;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ public class LinkedList<A> implements Iterable<A> {
     /*
     Assume that 0 is positive so 'negativeBound' will always be < 0 if there are elements in list
      */
-    LinkedList(int negativeBound, int positiveBound, int pos) {
+    public LinkedList(int negativeBound, int positiveBound, int pos) {
         if (negativeBound <= 0 && positiveBound >= 0 && pos >= negativeBound && pos <= positiveBound) {
             this.negativeBound = negativeBound;
             this.positiveBound = positiveBound;
