@@ -170,8 +170,8 @@ if __name__ == "__main__":
 
     while True:
         frame = getFrame(footage_socket)
-        pt1 = (padding[3], padding[2])
-        pt2 = (len(frame[0]) - padding[1], len(frame) - padding[0])
+        pt1 = (padding[3], len(frame) - padding[2])
+        pt2 = (len(frame[0]) - padding[1], padding[0])
         cv2.rectangle(frame, pt1, pt2, (0, 255, 0))
         cv2.imshow(title, frame)
         k = cv2.waitKey(1)
@@ -180,6 +180,7 @@ if __name__ == "__main__":
             train(model)
 
         elif k is ord(' '):
+            frame = frame[padding[3]:len(frame[0]) - padding[1], len(frame) - padding[2]:padding[0]]
             shapes, gray = findShapes(frame, thresh, (min, max))
             for c in shapes:
                 img = frame.copy()
