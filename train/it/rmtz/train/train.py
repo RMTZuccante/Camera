@@ -132,6 +132,7 @@ if __name__ == "__main__":
     ref = config['ref']
     offset = int(config['OFFSET'])
     precision = float(config['PRECISION'])
+    padding = config['FRAME_PADDING']
 
     context = zmq.Context()
     footage_socket = context.socket(zmq.SUB)
@@ -169,7 +170,9 @@ if __name__ == "__main__":
 
     while True:
         frame = getFrame(footage_socket)
-
+        pt1 = (padding[3], padding[2])
+        pt2 = (len(frame[0]) - padding[1], len(frame) - padding[0])
+        cv2.rectangle(frame, pt1, pt2, (0, 255, 0))
         cv2.imshow(title, frame)
         k = cv2.waitKey(1)
 
