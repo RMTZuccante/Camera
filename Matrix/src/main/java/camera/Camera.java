@@ -14,11 +14,12 @@ public class Camera {
     private static boolean libLoaded = false;
     int min, max, black, offset;
     double precision;
+    int[] paddings;
     MultiLayerNetwork model;
     private Frame frame = new Frame(this);
     private VideoCapture cap = new VideoCapture();
 
-    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision) {
+    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision, int[] paddings) {
         Camera.ref = ref;
         this.max = max;
         this.min = min;
@@ -26,6 +27,7 @@ public class Camera {
         this.model = model;
         this.offset = offset;
         this.precision = precision;
+        this.paddings = paddings;
     }
 
     public static boolean isLibLoaded() {

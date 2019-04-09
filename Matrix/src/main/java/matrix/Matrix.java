@@ -23,8 +23,56 @@ public class Matrix {
     private float bodyTemp;
     private Plane plane;
     private Cell lastMirror;
+    private Frame.Pair<Victim, Camera> foundVictim = null;
 
     private Step firstStep = new Step();
+
+    private Runnable camera = new Runnable() {
+        @Override
+        public void run() {
+            foundVictim = null;
+            boolean r = false, l = false;
+            try {
+                Thread.sleep(750);
+            } catch (InterruptedException e) {
+            }
+            Victim v = null;
+            Camera cam = null;
+            while (!Thread.interrupted() && v == null && !l && !r) {
+                if (left != null && left.isOpened()) {
+                    try {
+                        char c = left.capture().predict();
+                        if (c != 0) {
+                            cam = left;
+                            v = Victim.valueOf("" + c);
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Error getting frame from left camera");
+                        left.close();
+                        left = null;
+                    } catch (IllegalArgumentException e) {
+                        v = Victim.NONE;
+                    }
+                } else l = false;
+                if (right != null && right.isOpened()) {
+                    try {
+                        char c = right.capture().predict();
+                        if (c != 0) {
+                            cam = right;
+                            v = Victim.valueOf("" + c);
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Error getting frame from right camera");
+                        right.close();
+                        right = null;
+                    } catch (IllegalArgumentException e) {
+                        v = Victim.NONE;
+                    }
+                } else r = false;
+            }
+            if (v != null) foundVictim = new Frame.Pair<>(v, cam);
+        }
+    };
 
     public Matrix(SerialConnector connector, Camera left, Camera right, int maxWallDist, float bodyTemp) {
         this.left = left;
@@ -102,7 +150,10 @@ public class Matrix {
 
                 System.out.println("\tGo!");
                 go(true);
+                Thread t = new Thread(camera);
+                t.start();
                 int goret = connector.go();
+                t.interrupt();
                 if (goret == GOBLACK) {
                     actual.setBlack(true);
                     firstStep.next = null;
@@ -127,7 +178,7 @@ public class Matrix {
         }
     }
 
-    private Frame.Pair<Victim, Camera> foo() {
+    /*private Frame.Pair<Victim, Camera> foo() {
         Victim v = Victim.NONE;
         Camera cam = null;
         if (left != null && left.isOpened()) {
@@ -161,10 +212,11 @@ public class Matrix {
             }
         }
         return new Frame.Pair<>(v, cam);
-    }
+    }*/
 
     private void inspectCell() {
         Distances distances = connector.getDistances();
+        System.out.println("vf " + foundVictim);
 
         /*If there are no walls on some directions add a cell beside the actual one*/
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
@@ -173,10 +225,18 @@ public class Matrix {
         }
         if (distances.getLeft() > maxWallDist) {
             addLeftCell();
+            if (foundVictim != null && foundVictim.second == left) {
+                actual.setVictim(foundVictim.first);
+                System.out.println("Found victim " + foundVictim.second);
+            }
             System.out.println("left cell: " + distances.getLeft());
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
+            if (foundVictim != null && foundVictim.second == right) {
+                actual.setVictim(foundVictim.first);
+                System.out.println("Found victim " + foundVictim.second);
+            }
             System.out.println("right cell: " + distances.getRight());
         }
         if (distances.getBack() > maxWallDist) {

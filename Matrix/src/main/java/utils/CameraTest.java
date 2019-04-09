@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader;
 import camera.Camera;
 import camera.Frame.Pair;
 import camera.ModelLoader;
+import json.Values;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -23,11 +24,6 @@ import java.io.IOException;
  */
 
 public class CameraTest {
-    private static int cl, cr, thresh, minArea, maxAra, offset;
-    private static String libpath;
-    private static char[] ref;
-    private static double precision;
-
     public static void main(String[] args) {
         JsonObject config = null;
         Camera left = null, right = null;
@@ -41,8 +37,10 @@ public class CameraTest {
             System.exit(-1);
         }
 
-        if (getValuesFromJson(config)) {
-            if (Camera.loadLib(libpath)) {
+        Values v = new Values(config);
+
+        if (v.load()) {
+            if (Camera.loadLib(v.libpath)) {
                 MultiLayerNetwork model = null;
                 try {
                     model = ModelLoader.loadModel(modelpath);
@@ -52,15 +50,15 @@ public class CameraTest {
                 }
 
                 if (model != null) {
-                    left = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
-                    right = new Camera(model, ref, minArea, maxAra, thresh, offset, precision);
+                    left = new Camera(model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
+                    right = new Camera(model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
 
-                    if (!left.open(cl)) {
-                        System.err.println("Error opening left camera. index: " + cl);
+                    if (!left.open(v.leftCameaId)) {
+                        System.err.println("Error opening left camera. index: " + v.leftCameaId);
                     }
 
-                    if (!right.open(cr)) {
-                        System.err.println("Error opening right camera. index: " + cr);
+                    if (!right.open(v.rightCameraId)) {
+                        System.err.println("Error opening right camera. index: " + v.rightCameraId);
                     }
                 }
             } else {
@@ -104,26 +102,5 @@ public class CameraTest {
         left.close();
         right.close();
         System.exit(0);
-    }
-
-    private static boolean getValuesFromJson(JsonObject obj) {
-        try {
-            cl = obj.get("CAMERA_LEFT").getAsInt();
-            cr = obj.get("CAMERA_RIGHT").getAsInt();
-            JsonArray jsonRef = obj.get("ref").getAsJsonArray();
-            ref = new char[jsonRef.size()];
-            for (int i = 0; i < ref.length; i++) {
-                ref[i] = jsonRef.get(i).getAsCharacter();
-            }
-            thresh = obj.get("THRESH").getAsInt();
-            minArea = obj.get("MIN_AREA").getAsInt();
-            maxAra = obj.get("MAX_AREA").getAsInt();
-            offset = obj.get("OFFSET").getAsInt();
-            precision = obj.get("PRECISION").getAsDouble();
-            libpath = obj.get("LIBPATH").getAsString();
-        } catch (NullPointerException e) {
-            return false;
-        }
-        return true;
     }
 }
