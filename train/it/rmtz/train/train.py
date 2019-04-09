@@ -26,7 +26,8 @@ def findShapes(image, blackval, range=None):
     _, th = cv2.threshold(image, blackval, 255, cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
     contours = cv2.findContours(th, cv2.RETR_TREE,
                                 cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes (it returns other values like the success)
-    contours = contours[len(contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
+    contours = contours[len(
+        contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
 
     if range is not None:
         conts = []
@@ -170,9 +171,6 @@ if __name__ == "__main__":
 
     while True:
         frame = getFrame(footage_socket)
-        pt1 = (padding[3], len(frame) - padding[2])
-        pt2 = (len(frame[0]) - padding[1], padding[0])
-        cv2.rectangle(frame, pt1, pt2, (0, 255, 0))
         cv2.imshow(title, frame)
         k = cv2.waitKey(1)
 
@@ -180,7 +178,6 @@ if __name__ == "__main__":
             train(model)
 
         elif k is ord(' '):
-            frame = frame[padding[3]:len(frame[0]) - padding[1], len(frame) - padding[2]:padding[0]]
             shapes, gray = findShapes(frame, thresh, (min, max))
             for c in shapes:
                 img = frame.copy()

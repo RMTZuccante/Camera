@@ -35,7 +35,9 @@ def showStream(socket):
     global config
     padding = config['FRAME_PADDING']
     while True:
-        frame = cv2.cvtColor(getFrame(socket), cv2.COLOR_RGB2GRAY)
+        frame = getFrame(socket)
+        cv2.imshow("Coloured", frame)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         _, frame = cv2.threshold(frame, int(config['THRESH']), 255, cv2.THRESH_BINARY)
         range = (int(config['MIN_AREA']), int(config['MAX_AREA']))
         if range[0] == -1 or range[1] == -1:
