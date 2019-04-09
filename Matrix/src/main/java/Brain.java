@@ -40,7 +40,7 @@ public class Brain {
                     model = ModelLoader.loadModel(modelpath);
                     System.out.println("Model imported");
                 } catch (ModelLoader.ModelLoaderException e) {
-                    System.out.println(e.getMessage());
+                    System.out.println("Error loading model " + e.getMessage());
                     if (e.isCritic()) System.exit(-1);
                 }
 

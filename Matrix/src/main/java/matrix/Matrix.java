@@ -162,12 +162,16 @@ public class Matrix {
                 else if (goret == GORISE) {
                     if (actual instanceof RisingCell) {
                         plane = ((RisingCell) (actual)).getOtherFloor(plane);
+                        System.out.println("Changed to floor " + ((RisingCell) (actual)).getFloorId(plane));
+                        System.out.println("isrisingcell: " + (actual instanceof RisingCell));
                     } else {
-                        actual = new RisingCell(actual, plane); //TODO check if still climbing
+                        actual = new RisingCell(actual, plane);
                         plane = new Plane(actual);
                         ((RisingCell) (actual)).setNewFloor(plane);
+                        System.out.println("Changed to NEW floor " + ((RisingCell) (actual)).getFloorId(plane));
+                        System.out.println("isrisingcell: " + (actual instanceof RisingCell));
                     }
-                    System.out.println("Changed to floor " + ((RisingCell) (actual)).getFloorId(plane));
+                    firstStep.next = null;
                     addFrontCell();
                     go(true);
                 }
