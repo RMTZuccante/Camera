@@ -180,7 +180,7 @@ if __name__ == "__main__":
             train(model)
 
         elif k is ord(' '):
-            frame = frame[padding[3]:len(frame[0]) - padding[1], len(frame) - padding[2]:padding[0]]
+            frame = frame[padding[3]:len(frame[0]) - padding[1], padding[0]:len(frame) - padding[2]]
             shapes, gray = findShapes(frame, thresh, (min, max))
             for c in shapes:
                 img = frame.copy()
