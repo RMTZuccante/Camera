@@ -17,9 +17,10 @@ public class Camera {
     int[] paddings;
     MultiLayerNetwork model;
     private Frame frame = new Frame(this);
-    private VideoCapture cap = new VideoCapture();
+    private VideoCapture cap;
+    private int camId;
 
-    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision, int[] paddings) {
+    public Camera(int camId, MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision, int[] paddings) {
         Camera.ref = ref;
         this.max = max;
         this.min = min;
@@ -28,6 +29,8 @@ public class Camera {
         this.offset = offset;
         this.precision = precision;
         this.paddings = paddings;
+        this.camId = camId;
+        cap = new VideoCapture(camId);
     }
 
     public static boolean isLibLoaded() {
@@ -83,7 +86,7 @@ public class Camera {
             System.err.println("[ERR]: Trying opening camera without loading library");
             return false;
         }
-        return cap.open(i);
+        return cap.open(camId);
     }
 
     public boolean isOpened() {

@@ -50,8 +50,8 @@ public class CameraTest {
                 }
 
                 if (model != null) {
-                    left = new Camera(model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
-                    right = new Camera(model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
+                    left = new Camera(v.leftCameaId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
+                    right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
 
                     if (!left.open(v.leftCameaId)) {
                         System.err.println("Error opening left camera. index: " + v.leftCameaId);

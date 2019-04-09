@@ -45,12 +45,12 @@ public class Brain {
                 }
 
                 if (model != null) {
-                    left = new Camera(model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
-                    right = new Camera(model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
+                    left = new Camera(v.leftCameaId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
                     if (!left.open(v.leftCameaId)) {
                         System.err.println("Error opening left camera. index: " + v.leftCameaId);
                     } else System.out.println("Left camera opened");
 
+                    right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings);
                     if (!right.open(v.rightCameraId)) {
                         System.err.println("Error opening right camera. index: " + v.rightCameraId);
                     } else System.out.println("Right camera opened");
