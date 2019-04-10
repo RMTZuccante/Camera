@@ -168,9 +168,14 @@ if __name__ == "__main__":
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     print('Started')
+    frame = getFrame(footage_socket)
+
+    w = len(frame[0])
+    h = len(frame)
 
     while True:
         frame = getFrame(footage_socket)
+        frame = frame[padding[0]:h - padding[2], padding[3]:w - padding[1]]
         cv2.imshow(title, frame)
         k = cv2.waitKey(1)
 

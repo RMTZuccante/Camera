@@ -3,6 +3,7 @@ package camera;
 import org.apache.commons.lang3.SystemUtils;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.opencv.core.Core;
+import org.opencv.core.Rect;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
@@ -14,11 +15,15 @@ public class Camera {
     private static boolean libLoaded = false;
     int min, max, black, offset;
     double precision;
+    int[] paddings;
     MultiLayerNetwork model;
     private Frame frame = new Frame(this);
-    private VideoCapture cap = new VideoCapture();
+    private VideoCapture cap;
+    private int camId;
+    private Rect portion;
+    private boolean invertPadding;
 
-    public Camera(MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision) {
+    public Camera(int camId, MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision, int[] paddings, boolean invertPadding) {
         Camera.ref = ref;
         this.max = max;
         this.min = min;
@@ -26,6 +31,10 @@ public class Camera {
         this.model = model;
         this.offset = offset;
         this.precision = precision;
+        this.paddings = paddings;
+        this.camId = camId;
+        cap = new VideoCapture(camId);
+        this.invertPadding = invertPadding;
     }
 
     public static boolean isLibLoaded() {
@@ -81,7 +90,7 @@ public class Camera {
             System.err.println("[ERR]: Trying opening camera without loading library");
             return false;
         }
-        return cap.open(i);
+        return cap.open(camId);
     }
 
     public boolean isOpened() {
@@ -102,6 +111,13 @@ public class Camera {
         }
         if (!cap.read(frame)) throw new IOException("Camera may be disconnected");
         Core.rotate(frame, frame, Core.ROTATE_180);
+        if (portion == null) {
+            if (!invertPadding)
+                portion = new Rect(paddings[3], paddings[0], frame.width() - paddings[1] - paddings[3], frame.height() - paddings[0] - paddings[2]);
+            else
+                portion = new Rect(paddings[1], paddings[0], frame.width() - paddings[1] - paddings[3], frame.height() - paddings[0] - paddings[2]);
+        }
+        frame = new Frame(frame, portion, this);
         return frame;
     }
 }

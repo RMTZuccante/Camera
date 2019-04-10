@@ -17,6 +17,7 @@ public class RisingCell extends Cell {
         if (south != null) south.north = this;
         if (east != null) east.west = this;
         if (west != null) west.east = this;
+        visited = true;
         floors[0] = plane;
     }
 

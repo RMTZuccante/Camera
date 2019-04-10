@@ -2,6 +2,7 @@ import base64
 import cv2
 import zmq
 import sys
+import json
 
 if __name__ == "__main__":
 
@@ -11,7 +12,11 @@ if __name__ == "__main__":
     footage_socket.connect('tcp://' + sys.argv[2] + ':2626')
     footage_socket.setsockopt(zmq.SNDHWM, 1)
 
-    camera = cv2.VideoCapture(int(sys.argv[1]))  # init the camera
+    configfile = open('../config.json', 'r')
+    config = json.load(configfile)
+    configfile.close()
+
+    camera = cv2.VideoCapture(int(config['CAMERA_' + sys.argv[1].upper()]))  # init the camera
 
     while True:
         try:
