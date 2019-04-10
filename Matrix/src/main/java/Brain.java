@@ -39,7 +39,7 @@ public class Brain {
 
         Values v = new Values(config);
         if (v.load()) {
-            if (Camera.loadLib(v.libpath)) {
+            if (v.enbaleCameras && Camera.loadLib(v.libpath)) {
                 MultiLayerNetwork model = null;
                 try {
                     model = ModelLoader.loadModel(modelpath);
@@ -77,6 +77,10 @@ public class Brain {
 
         System.out.println("Using " + stm.getSystemPortName());
         SerialConnector c = new SerialConnector(stm, 115200);
+
+        c.setDebug(v.debugLevel);
+        c.setBlackThreshold(v.black);
+
         Matrix m = new Matrix(c, left, right, v.distwall, v.bodytemp);
         Runtime.getRuntime().addShutdownHook(shutdown);
         m.start();

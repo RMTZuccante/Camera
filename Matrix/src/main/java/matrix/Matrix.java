@@ -100,8 +100,6 @@ public class Matrix {
             }
         }
 
-        connector.setDebug((byte) 0);
-
         start = actual = lastMirror = new Cell();
         plane = new Plane(start);
 

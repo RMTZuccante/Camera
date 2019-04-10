@@ -10,6 +10,9 @@ public class Values {
     public char[] ref;
     public double precision;
     public int[] paddings;
+    public boolean enbaleCameras;
+    public byte black;
+    public byte debugLevel;
 
     private JsonObject obj;
 
@@ -35,6 +38,9 @@ public class Values {
             for (int i = 0; i < paddings.length; i++) {
                 paddings[i] = arr.get(i).getAsInt();
             }
+            enbaleCameras = obj.get("ENABLECAMERAS").getAsBoolean();
+            black = obj.get("BLACK").getAsByte();
+            debugLevel = obj.get("DEBUG").getAsByte();
         } catch (NullPointerException e) {
             return false;
         }
