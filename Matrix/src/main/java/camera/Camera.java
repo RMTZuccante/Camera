@@ -3,6 +3,7 @@ package camera;
 import org.apache.commons.lang3.SystemUtils;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.opencv.core.Core;
+import org.opencv.core.Rect;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
@@ -19,6 +20,7 @@ public class Camera {
     private Frame frame = new Frame(this);
     private VideoCapture cap;
     private int camId;
+    private Rect portion;
 
     public Camera(int camId, MultiLayerNetwork model, char[] ref, int min, int max, int black, int offset, double precision, int[] paddings) {
         Camera.ref = ref;
@@ -107,6 +109,9 @@ public class Camera {
         }
         if (!cap.read(frame)) throw new IOException("Camera may be disconnected");
         Core.rotate(frame, frame, Core.ROTATE_180);
+        if (portion == null)
+            portion = new Rect(paddings[3], paddings[0], frame.width() - paddings[1] - paddings[3], frame.height() - paddings[0] - paddings[2]);
+        frame = new Frame(frame, portion, this);
         return frame;
     }
 }

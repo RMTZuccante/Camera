@@ -8,9 +8,14 @@ import json.Values;
 import matrix.Matrix;
 import matrix.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.highgui.HighGui;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 
 public class Brain {
     private static SerialPort stm;

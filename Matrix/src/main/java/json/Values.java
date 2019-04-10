@@ -33,7 +33,7 @@ public class Values {
             JsonArray arr = obj.get("FRAME_PADDING").getAsJsonArray();
             paddings = new int[arr.size()];
             for (int i = 0; i < paddings.length; i++) {
-                arr.get(i).getAsInt();
+                paddings[i] = arr.get(i).getAsInt();
             }
         } catch (NullPointerException e) {
             return false;

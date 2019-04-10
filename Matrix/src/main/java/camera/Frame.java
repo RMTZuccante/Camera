@@ -15,6 +15,11 @@ public class Frame extends Mat {
         cam = c;
     }
 
+    protected Frame(Mat m, Rect dim, Camera c) {
+        super(m, dim);
+        cam = c;
+    }
+
     public synchronized char predict() {
         Pair<Character, Rect> p = predictWithShape();
         return p == null ? 0 : p.first;
