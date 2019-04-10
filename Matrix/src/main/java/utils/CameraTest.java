@@ -1,12 +1,11 @@
 package utils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import camera.Camera;
 import camera.Frame.Pair;
 import camera.ModelLoader;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import json.Values;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.opencv.core.Point;
