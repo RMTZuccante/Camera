@@ -157,15 +157,15 @@ public class SerialConnector {
 
     public synchronized Temps getTemps() {
         waitReady();
-        toRead = 8;
+        toRead = 12;
         buffer[0] = GETTEMPS;
         stm.writeBytes(buffer, 1);
         waitFor(GETTEMPS);
 
-        float[] arr = new float[2];
-        for (int i = 0; i < 2; i++)
+        float[] arr = new float[3];
+        for (int i = 0; i < 3; i++)
             arr[i] = ByteBuffer.wrap(buffer, 4 * i, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-        return new Temps(arr[0], arr[1]);
+        return new Temps(arr[0], arr[1], arr[2]);
     }
 
     public synchronized float getInclination() {
@@ -277,10 +277,12 @@ public class SerialConnector {
     public class Temps {
         private float left;
         private float right;
+        private float ambient;
 
-        public Temps(float left, float right) {
+        public Temps(float left, float right, float ambient) {
             this.left = left;
             this.right = right;
+            this.ambient = ambient;
         }
 
         public float getLeft() {
@@ -291,11 +293,16 @@ public class SerialConnector {
             return right;
         }
 
+        public float getAmbient() {
+            return ambient;
+        }
+
         @Override
         public String toString() {
             return "Temps{" +
                     "left=" + left +
                     ", right=" + right +
+                    ", ambient=" + ambient +
                     '}';
         }
     }
