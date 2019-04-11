@@ -24,10 +24,8 @@ def getFrame(socket):
 def findShapes(image, blackval, range=None):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert the image from RGB to greyscale
     _, th = cv2.threshold(image, blackval, 255, cv2.THRESH_BINARY)  # Convert image into a bit matrix (black and white)
-    contours = cv2.findContours(th, cv2.RETR_TREE,
-                                cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes (it returns other values like the success)
-    contours = contours[len(
-        contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
+    contours = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # Find contours of shapes (it returns other values like the success)
+    contours = contours[len(contours) - 2]  # Take only contours array from cv2.finContours, the index isn't fixed for compatibility purpose
 
     if range is not None:
         conts = []
@@ -87,30 +85,11 @@ def save():
 
         if model is not None:
             model.save('../model/model.h5')
-            '''model_file = open('../model/model.json', 'w')
-            weights_file = open('../model/weights.bin', 'wb')
-
-            model_file.write(model.to_json())
-            model_file.close()
-
-            dump(model.get_weights(), weights_file)
-            weights_file.close()'''
             print('Model saved')
         else:
             errprint('Cannot save an empty model!')
     except FileNotFoundError:
         errprint('Unable to save model, file not found')
-
-
-def deflect(img):
-    newimg = cv2.bitwise_not(img)
-    thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    coords = np.column_stack(np.where(thresh > 0))
-    angle = cv2.minAreaRect(coords)[-1]
-    if angle < -45:
-        angle = -(90 + angle)
-    else:
-        angle = -angle
 
 
 title = "Train"
@@ -175,7 +154,7 @@ if __name__ == "__main__":
 
     while True:
         frame = getFrame(footage_socket)
-        frame = frame[padding[0]:h - padding[2], padding[3]:w - padding[1]]
+        # frame = frame[padding[0]:h - padding[2], padding[3]:w - padding[1]]
         cv2.imshow(title, frame)
         k = cv2.waitKey(1)
 
@@ -185,7 +164,7 @@ if __name__ == "__main__":
         elif k is ord(' '):
             shapes, gray = findShapes(frame, thresh, (min, max))
             for c in shapes:
-                img = frame.copy()
+                img = cv2.GaussianBlur(frame, (5, 5), 0)
                 cv2.drawContours(img, [c], -1, (0, 255, 0), 1)
                 x, y, w, h = cv2.boundingRect(c)
                 cv2.rectangle(img, (x - offset, y - offset), (x + w + offset, y + h + offset), (10, 71, 239), 2)

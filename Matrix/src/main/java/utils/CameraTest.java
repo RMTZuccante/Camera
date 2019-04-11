@@ -35,7 +35,7 @@ public class CameraTest {
         JsonObject config = null;
         Camera left = null, right = null;
 
-        String modelpath = "./model/model.dl4j";
+        String modelpath = "../model/model.dl4j";
 
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();

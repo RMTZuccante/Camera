@@ -26,6 +26,7 @@ public class Frame extends Mat {
     }
 
     public synchronized Pair<Character, Rect> predictWithShape() {
+        Imgproc.GaussianBlur(this, this, new Size(5, 5), 0);
         Pair<Character, Rect> pred = new Pair<>(null, null);
         Pair<ArrayList<MatOfPoint>, Mat> found = findShapes();
         double prob = 0;
