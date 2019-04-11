@@ -7,6 +7,7 @@ import matrix.cartesian.Plane;
 import matrix.cell.Cell;
 import matrix.cell.Cell.Victim;
 import matrix.cell.RisingCell;
+import org.opencv.core.Rect;
 
 import java.io.IOException;
 import java.util.Random;
@@ -30,54 +31,80 @@ public class Matrix {
     private Cell lastMirror;
     private Frame.Pair<Victim, Camera> foundVictim = null;
     private Random random = new Random();
+    private boolean wasclimbing = false;
 
     private Step firstStep = new Step();
 
     private Runnable camera = new Runnable() {
         @Override
         public void run() {
+            int ril = 2;
             foundVictim = null;
             boolean r = false, l = false;
             try {
                 Thread.sleep(750);
             } catch (InterruptedException e) {
             }
-            Victim v = null;
-            int area, count = 0;
+            char v = 0;
+            double area = 0;
+            int count = 0;
             Camera cam = null;
+            Frame.Pair<Character, Rect> pred;
             while (!Thread.interrupted() && (!l || !r)) {
                 if (left != null && left.isOpened()) {
                     try {
-                        char c = left.capture().predict();
-                        if (c != 0) {
+                        pred = left.capture().predictWithShape();
+                        char c = pred != null ? pred.first : 0;
+                        if (c == v) {
+                            if (pred.second.area() > area) {
+                                count++;
+                                area = pred.second.area();
+                                if (count > 3) {
+                                    break;
+                                }
+                            }
+                        } else if (c != 0) {
+                            count = 0;
                             cam = left;
-                            v = Victim.valueOf("" + c);
+                            v = c;
+                            area = pred.second.area();
                         }
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Error getting frame from left camera");
                         left.close();
                         left = null;
                     } catch (IllegalArgumentException e) {
-                        v = Victim.NONE;
+                        v = 0;
                     }
                 } else l = false;
                 if (right != null && right.isOpened()) {
                     try {
-                        char c = right.capture().predict();
-                        if (c != 0) {
-                            cam = right;
-                            v = Victim.valueOf("" + c);
+                        pred = right.capture().predictWithShape();
+                        char c = pred != null ? pred.first : 0;
+                        if (c == v) {
+                            if (pred.second.area() > area) {
+                                count++;
+                                area = pred.second.area();
+                                if (count > 3) {
+                                    break;
+                                }
+                            }
+                        } else if (c != 0) {
+                            count = 0;
+                            cam = left;
+                            v = c;
+                            area = pred.second.area();
                         }
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Error getting frame from right camera");
                         right.close();
                         right = null;
                     } catch (IllegalArgumentException e) {
-                        v = Victim.NONE;
+                        v = 0;
                     }
                 } else r = false;
             }
-            if (v != null) foundVictim = new Frame.Pair<>(v, cam);
+            if (v != 0) foundVictim = new Frame.Pair<>(Victim.valueOf("" + v), cam);
         }
     };
 
@@ -91,7 +118,6 @@ public class Matrix {
     }
 
     public void start(byte debugLevel, byte black) {
-        int i = 0;
         while (!connector.handShake()) {
             System.out.println("hand");
             /*if (++i > 10) {
@@ -113,11 +139,17 @@ public class Matrix {
         start = actual = lastMirror = new Cell();
         plane = new Plane(start);
 
+        for (int i = 0; i < random.nextInt(10); i++) random.nextBoolean();
+
+        Thread t = null;
+
         while (true) {
+            t = new Thread(camera);
             boolean victimfound = actual.getVictim() != Victim.NONE;
             inspectCell();
             Direction dir = nextDirection();
             if (dir != null) {
+                t.start();
                 switch (dir) {
                     case BACK:
                         logger.info("Go back");
@@ -144,6 +176,7 @@ public class Matrix {
                         break;
 
                 }
+                t.interrupt();
                 if (actual.getVictim() != Victim.NONE && !victimfound) {
                     int packages = 0;
 
@@ -158,31 +191,39 @@ public class Matrix {
 
                 logger.info("\tGo!");
                 go(true);
-                Thread t = new Thread(camera);
+                t = new Thread(camera);
                 t.start();
                 int goret = connector.go();
                 t.interrupt();
                 if (goret == GOBLACK) {
+                    wasclimbing = false;
                     actual.setBlack(true);
                     firstStep.next = null;
                     go(false);
-                } else if (goret == GOOBSTACLE) actual.weight = 10;
-                else if (goret == GORISE) {
+                } else if (goret == GOOBSTACLE) {
+                    wasclimbing = false;
+                    actual.weight = 10;
+                } else if (goret == GORISE) {
+                    if (wasclimbing) {
+                        logger.log(Level.SEVERE, "Fake end of rise detected");
+                        actual.unset();
+                        plane.remove();
+                        go(false);
+                        if (actual instanceof RisingCell) logger.log(Level.SEVERE, "\tSolved");
+                        else logger.log(Level.SEVERE, "\tNot solved, Nico fix it!");
+                    }
+
                     if (actual instanceof RisingCell) {
-                        plane = ((RisingCell) (actual)).getOtherFloor(plane);
-                        logger.info("Changed to floor " + ((RisingCell) (actual)).getFloorId(plane));
-                        logger.info("isrisingcell: " + (actual instanceof RisingCell));
+                        logger.info("Changed floor");
                     } else {
                         actual = new RisingCell(actual, plane);
-                        plane = new Plane(actual);
-                        ((RisingCell) (actual)).setNewFloor(plane);
-                        logger.info("Changed to NEW floor " + ((RisingCell) (actual)).getFloorId(plane));
-                        logger.info("isrisingcell: " + (actual instanceof RisingCell));
+                        logger.info("Changed to NEW floor");
                     }
+                    wasclimbing = true;
                     firstStep.next = null;
                     addFrontCell();
                     go(true);
-                }
+                } else wasclimbing = false;
             } else {
                 logger.info("Finished! MISSION COMPLETED!");
                 break;
@@ -192,7 +233,7 @@ public class Matrix {
 
     private void inspectCell() {
         Distances distances = connector.getDistances();
-        //logger.info("vf " + foundVictim);
+        if (foundVictim != null) logger.info("Found Victim! " + foundVictim);
 
 
         Temps temps = connector.getTemps();
@@ -207,18 +248,16 @@ public class Matrix {
             if (foundVictim != null && foundVictim.second == left) {
                 actual.setVictim(foundVictim.first);
                 logger.info("Found victim " + foundVictim.second);
-            }
+            } else if (isVictim(temps.getLeft(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
             logger.info("left cell: " + distances.getLeft());
-            if (isVictim(temps.getLeft(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
             if (foundVictim != null && foundVictim.second == right) {
                 actual.setVictim(foundVictim.first);
                 logger.info("Found victim " + foundVictim.second);
-            }
+            } else if (isVictim(temps.getRight(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
             logger.info("right cell: " + distances.getRight());
-            if (isVictim(temps.getRight(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
         }
         if (distances.getBack() > maxWallDist) {
             addBackCell();
@@ -248,7 +287,7 @@ public class Matrix {
 
     private boolean isVictim(float temp, float ambient) {
         // TODO improve detections rules
-        return (ambient - temp) > bodyTemp;
+        return (temp) > bodyTemp;
     }
 
     /**

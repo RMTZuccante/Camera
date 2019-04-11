@@ -33,4 +33,39 @@ public class RisingCell extends Cell {
     public String getFloorId(Plane floor) {
         return this.hashCode() + "" + (floor == floors[0] ? 0 : 1);
     }
+
+    @Override
+    public void setVictim(Victim victim) {
+
+    }
+
+    @Override
+    public void setBlack(boolean black) {
+
+    }
+
+    @Override
+    public void setMirror(boolean mirror) {
+
+    }
+
+    @Override
+    public void setWest(Cell w) {
+        if ((east == north && north == south && south == west && west == null) || east != null) super.setWest(w);
+    }
+
+    @Override
+    public void setEast(Cell e) {
+        if ((east == north && north == south && south == west && west == null) || west != null) super.setEast(e);
+    }
+
+    @Override
+    public void setSouth(Cell s) {
+        if ((east == north && north == south && south == west && west == null) || north != null) super.setSouth(s);
+    }
+
+    @Override
+    public void setNorth(Cell n) {
+        if ((east == north && north == south && south == west && west == null) || south != null) super.setNorth(n);
+    }
 }

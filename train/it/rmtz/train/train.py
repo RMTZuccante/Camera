@@ -53,7 +53,7 @@ def train(model):
 
 
 def test():
-    print('Testing')
+    print('Testing, prec ', precision)
     while (cv2.waitKey(1) != ord('q')):
         frame = getFrame(footage_socket)
         conts, grey = findShapes(frame, thresh, (min, max))
@@ -69,7 +69,7 @@ def test():
             _, img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)
             img = expand_dims(img, 0)
             pred = model.predict(img / 255.0)
-            if amax(pred[0]) > precision:
+            if amax(pred[0]) >= precision:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv2.putText(frame, ref[argmax(pred[0])].upper() + ' ' + str("%.3f" % (amax(pred[0]) * 100)) + '%',
                             (x + w + 10, y + h), 0, 0.8, (0, 255, 0))

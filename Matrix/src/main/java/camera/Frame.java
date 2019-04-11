@@ -34,7 +34,7 @@ public class Frame extends Mat {
             Rect bound = Imgproc.boundingRect(c);
             INDArray arr = getInputImage(found.second, bound);
             INDArray predict = cam.model.output(arr);
-            if (predict.amax().getDouble(0) > cam.precision && predict.amax().getDouble(0) > prob) {
+            if (predict.amax().getDouble(0) >= cam.precision && predict.amax().getDouble(0) > prob) {
                 prob = predict.amax().getDouble(0);
                 pred.first = Camera.ref[predict.argMax().getInt(0)];
                 pred.second = bound;
