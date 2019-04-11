@@ -39,6 +39,7 @@ def showStream(socket):
         cv2.imshow("Coloured", frame)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         _, frame = cv2.threshold(frame, int(config['THRESH']), 255, cv2.THRESH_BINARY)
+        frame = cv2.GaussianBlur(frame, (3,3), 0)
         range = (int(config['MIN_AREA']), int(config['MAX_AREA']))
         if range[0] == -1 or range[1] == -1:
             range = None
@@ -127,18 +128,22 @@ if __name__ == "__main__":
     app.setSpinBoxChangeFunction("Max area", setMaxAera)
 
     app.addLabelScale("Top padding")
+    app.showScaleValue("Top padding", 1)
     app.setScaleRange("Top padding", 0, 255, config['FRAME_PADDING'][0])
     app.setScaleChangeFunction("Top padding", settp)
 
     app.addLabelScale("Right padding")
+    app.showScaleValue("Right padding", 1)
     app.setScaleRange("Right padding", 0, 255, config['FRAME_PADDING'][1])
     app.setScaleChangeFunction("Right padding", setrp)
 
     app.addLabelScale("Bottom padding")
+    app.showScaleValue("Bottom padding", 1)
     app.setScaleRange("Bottom padding", 0, 255, config['FRAME_PADDING'][2])
     app.setScaleChangeFunction("Bottom padding", setbp)
 
     app.addLabelScale("Left padding")
+    app.showScaleValue("Left padding", 1)
     app.setScaleRange("Left padding", 0, 255, config['FRAME_PADDING'][3])
     app.setScaleChangeFunction("Left padding", setlp)
 
