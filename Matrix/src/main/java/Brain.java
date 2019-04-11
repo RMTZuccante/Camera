@@ -8,14 +8,9 @@ import json.Values;
 import matrix.Matrix;
 import matrix.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.opencv.core.Mat;
-import org.opencv.core.Rect;
-import org.opencv.highgui.HighGui;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -84,12 +79,8 @@ public class Brain {
 
         logger.info("Using " + stm.getSystemPortName());
         SerialConnector c = new SerialConnector(stm, 115200);
-
-        c.setDebug(v.debugLevel);
-        c.setBlackThreshold(v.black);
-
         Matrix m = new Matrix(c, left, right, v.distwall, v.bodytemp);
         Runtime.getRuntime().addShutdownHook(shutdown);
-        m.start();
+        m.start(v.debugLevel, v.black);
     }
 }

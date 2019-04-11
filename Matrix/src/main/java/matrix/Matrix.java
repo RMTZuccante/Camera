@@ -9,6 +9,7 @@ import matrix.cell.Cell.Victim;
 import matrix.cell.RisingCell;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,6 +29,7 @@ public class Matrix {
     private Plane plane;
     private Cell lastMirror;
     private Frame.Pair<Victim, Camera> foundVictim = null;
+    private Random random = new Random();
 
     private Step firstStep = new Step();
 
@@ -51,7 +53,7 @@ public class Matrix {
                             v = Victim.valueOf("" + c);
                         }
                     } catch (IOException e) {
-                        logger.log(Level.SEVERE,"Error getting frame from left camera");
+                        logger.log(Level.SEVERE, "Error getting frame from left camera");
                         left.close();
                         left = null;
                     } catch (IllegalArgumentException e) {
@@ -66,7 +68,7 @@ public class Matrix {
                             v = Victim.valueOf("" + c);
                         }
                     } catch (IOException e) {
-                        logger.log(Level.SEVERE,"Error getting frame from right camera");
+                        logger.log(Level.SEVERE, "Error getting frame from right camera");
                         right.close();
                         right = null;
                     } catch (IllegalArgumentException e) {
@@ -87,15 +89,16 @@ public class Matrix {
         direction = NORTH;
     }
 
-    public void start() {
+    public void start(byte debugLevel, byte black) {
         int i = 0;
         while (!connector.handShake()) {
-            if (++i > 10) {
+            System.out.println("hand");
+            /*if (++i > 10) {
                 i = 0;
                 logger.info("10 handshake failed attemps, resetting STM");
                 connector.reset();
-            }
-            logger.log(Level.SEVERE,"Handshake failed!");
+            }*/
+            logger.log(Level.SEVERE, "Handshake failed!");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -103,6 +106,8 @@ public class Matrix {
                 System.exit(-1);
             }
         }
+        connector.setDebug(debugLevel);
+        connector.setBlackThreshold(black);
 
         start = actual = lastMirror = new Cell();
         plane = new Plane(start);
@@ -222,7 +227,7 @@ public class Matrix {
 
     private void inspectCell() {
         Distances distances = connector.getDistances();
-        logger.info("vf " + foundVictim);
+        //logger.info("vf " + foundVictim);
 
         /*If there are no walls on some directions add a cell beside the actual one*/
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
@@ -236,6 +241,7 @@ public class Matrix {
                 logger.info("Found victim " + foundVictim.second);
             }
             logger.info("left cell: " + distances.getLeft());
+            if (connector.getTemps().getLeft() > bodyTemp) actual.setVictim(Victim.HEAT);
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
@@ -244,6 +250,7 @@ public class Matrix {
                 logger.info("Found victim " + foundVictim.second);
             }
             logger.info("right cell: " + distances.getRight());
+            if (connector.getTemps().getRight() > bodyTemp) actual.setVictim(Victim.HEAT);
         }
         if (distances.getBack() > maxWallDist) {
             addBackCell();
@@ -251,7 +258,6 @@ public class Matrix {
         }
 
         actual.setMirror(isMirror());
-        if (isVictim()) actual.setVictim(Victim.HEAT);
         actual.visited = true; //Mark the cell as visited
     }
 
@@ -271,13 +277,6 @@ public class Matrix {
         return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
     }
 
-
-    private boolean isVictim() {
-        Temps temps = connector.getTemps();
-        // TODO improve detections rules
-        return temps.getLeft() > bodyTemp || temps.getRight() > bodyTemp;
-    }
-
     /**
      * Returns the next direction to take, calls pathfinding if needed.
      * It also checks if all the maze is visited
@@ -290,10 +289,10 @@ public class Matrix {
         if (firstStep.next == null) {
             if (pathFinding(actual, firstStep, direction) == -1) {
                 if (actual != start) {
-                    logger.log(Level.SEVERE,"No more cells, ALL VISITED!, going back to home");
+                    logger.log(Level.SEVERE, "No more cells, ALL VISITED!, going back to home");
                     start.visited = false;
                     if (pathFinding(actual, firstStep, direction) == -1) {
-                        logger.log(Level.SEVERE,"Failed pathfinding to home! ERROR!");
+                        logger.log(Level.SEVERE, "Failed pathfinding to home! ERROR!");
                     } else gotNewDir = true;
                 }
             } else gotNewDir = true;
@@ -317,8 +316,14 @@ public class Matrix {
         if (cell != null && !cell.considered && !cell.isBlack()) { //If the cell doesn't exists (wall), it has already been considered or is black return the weight (-1), else calculate a path
             if (cell.visited) { //If the cell is already visited keep looking
                 cell.considered = true; //Mark the cell as considered
-                Step[] steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)}; //Directions ordered to check the path
-                byte[] cardinals = new byte[]{direction, getNewCardinalDirection(direction, Direction.RIGHT), getNewCardinalDirection(direction, Direction.LEFT), getNewCardinalDirection(direction, Direction.BACK)}; //Set cardinal directions
+                Step[] steps;
+
+                if (random.nextBoolean())
+                    steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)}; //Directions ordered to check the path
+                else
+                    steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.LEFT), new Step(Direction.RIGHT), new Step(Direction.BACK)}; //Directions ordered to check the path
+
+                byte[] cardinals = new byte[]{direction, getNewCardinalDirection(direction, steps[1].direction), getNewCardinalDirection(direction, steps[2].direction), getNewCardinalDirection(direction, Direction.BACK)}; //Set cardinal directions
                 int pos = -1; //Index of found shortest path to new cell
 
                 for (int i = 0; i < 4; i++) {
