@@ -17,7 +17,7 @@ public class SerialConnector {
     public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
     private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET = 10, GETINCLINATION = 11;
     private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
-    private byte[] buffer = new byte[10];
+    private byte[] buffer = new byte[20];
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     private SerialPort stm;
     private boolean ready;

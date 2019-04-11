@@ -43,8 +43,9 @@ public class Matrix {
             } catch (InterruptedException e) {
             }
             Victim v = null;
+            int area, count = 0;
             Camera cam = null;
-            while (!Thread.interrupted() && v == null && !l && !r) {
+            while (!Thread.interrupted() && (!l || !r)) {
                 if (left != null && left.isOpened()) {
                     try {
                         char c = left.capture().predict();
@@ -189,45 +190,12 @@ public class Matrix {
         }
     }
 
-    /*private Frame.Pair<Victim, Camera> foo() {
-        Victim v = Victim.NONE;
-        Camera cam = null;
-        if (left != null && left.isOpened()) {
-            try {
-                char c = left.capture().predict();
-                if (c != 0) {
-                    cam = left;
-                    v = Victim.valueOf("" + c);
-                }
-            } catch (IOException e) {
-                logger.log(Level.SEVERE,"Error getting frame from left camera");
-                left.close();
-                left = null;
-            } catch (IllegalArgumentException e) {
-                v = Victim.NONE;
-            }
-        }
-        if (right != null && right.isOpened()) {
-            try {
-                char c = right.capture().predict();
-                if (c != 0) {
-                    cam = right;
-                    v = Victim.valueOf("" + c);
-                }
-            } catch (IOException e) {
-                logger.log(Level.SEVERE,"Error getting frame from right camera");
-                right.close();
-                right = null;
-            } catch (IllegalArgumentException e) {
-                v = Victim.NONE;
-            }
-        }
-        return new Frame.Pair<>(v, cam);
-    }*/
-
     private void inspectCell() {
         Distances distances = connector.getDistances();
         //logger.info("vf " + foundVictim);
+
+
+        Temps temps = connector.getTemps();
 
         /*If there are no walls on some directions add a cell beside the actual one*/
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
@@ -241,7 +209,7 @@ public class Matrix {
                 logger.info("Found victim " + foundVictim.second);
             }
             logger.info("left cell: " + distances.getLeft());
-            if (connector.getTemps().getLeft() > bodyTemp) actual.setVictim(Victim.HEAT);
+            if (isVictim(temps.getLeft(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
@@ -250,7 +218,7 @@ public class Matrix {
                 logger.info("Found victim " + foundVictim.second);
             }
             logger.info("right cell: " + distances.getRight());
-            if (connector.getTemps().getRight() > bodyTemp) actual.setVictim(Victim.HEAT);
+            if (isVictim(temps.getRight(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
         }
         if (distances.getBack() > maxWallDist) {
             addBackCell();
@@ -275,6 +243,12 @@ public class Matrix {
         Color color = connector.getColor();
         // TODO improve detections rules
         return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
+    }
+
+
+    private boolean isVictim(float temp, float ambient) {
+        // TODO improve detections rules
+        return (ambient - temp) > bodyTemp;
     }
 
     /**
