@@ -57,7 +57,7 @@ public class SerialConnector {
                             toPrint.append((char) buf[0]);
                             stm.readBytes(buf, 1);
                         }
-                        System.out.print(toPrint);
+                        logger.info(toPrint.toString());
                     } else {
                         if (buf[0] == READY) ready = true;
                         else {
