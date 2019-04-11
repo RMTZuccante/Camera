@@ -248,7 +248,7 @@ public class Matrix {
             if (foundVictim != null && foundVictim.second == left) {
                 actual.setVictim(foundVictim.first);
                 logger.info("Found victim " + foundVictim.second);
-            } else if (isVictim(temps.getLeft(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
+            } else if (isVictim(temps.getRight(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
             logger.info("left cell: " + distances.getLeft());
         }
         if (distances.getRight() > maxWallDist) {
@@ -256,7 +256,7 @@ public class Matrix {
             if (foundVictim != null && foundVictim.second == right) {
                 actual.setVictim(foundVictim.first);
                 logger.info("Found victim " + foundVictim.second);
-            } else if (isVictim(temps.getRight(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
+            } else if (isVictim(temps.getLeft(), temps.getAmbient())) actual.setVictim(Victim.HEAT);
             logger.info("right cell: " + distances.getRight());
         }
         if (distances.getBack() > maxWallDist) {
@@ -286,6 +286,7 @@ public class Matrix {
 
 
     private boolean isVictim(float temp, float ambient) {
+        logger.log(Level.INFO,temp +" "+bodyTemp);
         // TODO improve detections rules
         return (temp) > bodyTemp;
     }
