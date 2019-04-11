@@ -8,8 +8,13 @@ import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static utils.Utils.RMTZ_LOGGER;
 
 public class Camera {
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
 
     static char[] ref = null;
     private static boolean libLoaded = false;
@@ -44,12 +49,12 @@ public class Camera {
     public static boolean loadLib(String path) {
         if (libLoaded) return true;
         if (path == null || path.length() == 0) {
-            System.out.println("[INFO]: No lib path specified, searching in this directory");
+            logger.info("[INFO]: No lib path specified, searching in this directory");
             path = ".";
         }
         File dir = new File(path);
         if (!dir.isDirectory() || !dir.exists()) {
-            System.err.println("The provided lib path is invalid");
+            logger.log(Level.SEVERE,"The provided lib path is invalid");
             return false;
         }
         path = null;
@@ -69,11 +74,11 @@ public class Camera {
                 }
             }
         } else {
-            System.err.println("OS not compatible yet");
+            logger.log(Level.SEVERE,"OS not compatible yet");
             return false;
         }
         if (path == null) {
-            System.err.println("Cannot find native library in specified path");
+            logger.log(Level.SEVERE,"Cannot find native library in specified path");
             return false;
         }
         System.load(path);
@@ -87,7 +92,7 @@ public class Camera {
 
     public boolean open(int i) {
         if (!libLoaded) {
-            System.err.println("[ERR]: Trying opening camera without loading library");
+            logger.log(Level.SEVERE,"[ERR]: Trying opening camera without loading library");
             return false;
         }
         return cap.open(camId);
@@ -103,10 +108,10 @@ public class Camera {
 
     public Frame capture() throws IOException {
         if (!libLoaded) {
-            System.err.println("[ERR]: Trying reading camera input without loading library");
+            logger.log(Level.SEVERE,"[ERR]: Trying reading camera input without loading library");
             return null;
         } else if (!cap.isOpened()) {
-            System.err.println("[ERR]: Trying reading camera without opening it");
+            logger.log(Level.SEVERE,"[ERR]: Trying reading camera without opening it");
             return null;
         }
         if (!cap.read(frame)) throw new IOException("Camera may be disconnected");

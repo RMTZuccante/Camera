@@ -17,13 +17,21 @@ import org.opencv.imgproc.Imgproc;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static utils.Utils.RMTZ_LOGGER;
+import static utils.Utils.setupLogger;
 
 /**
  * Created by NicoTF
  */
 
 public class CameraTest {
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
+
     public static void main(String[] args) {
+        setupLogger(true);
         JsonObject config = null;
         Camera left = null, right = null;
 
@@ -32,7 +40,7 @@ public class CameraTest {
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
         } catch (FileNotFoundException e) {
-            System.err.println("Cannot find config.json");
+            logger.log(Level.SEVERE,"Cannot find config.json");
             System.exit(-1);
         }
 
@@ -53,18 +61,18 @@ public class CameraTest {
                     right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, true);
 
                     if (!left.open(v.leftCameaId)) {
-                        System.err.println("Error opening left camera. index: " + v.leftCameaId);
+                        logger.log(Level.SEVERE,"Error opening left camera. index: " + v.leftCameaId);
                     }
 
                     if (!right.open(v.rightCameraId)) {
-                        System.err.println("Error opening right camera. index: " + v.rightCameraId);
+                        logger.log(Level.SEVERE,"Error opening right camera. index: " + v.rightCameraId);
                     }
                 }
             } else {
-                System.err.println("Error loading lib, provided path may be wrong");
+                logger.log(Level.SEVERE,"Error loading lib, provided path may be wrong");
             }
         } else {
-            System.err.println("Error loading config.json");
+            logger.log(Level.SEVERE,"Error loading config.json");
         }
 
         if (left != null) while (left.isOpened() || right.isOpened()) {

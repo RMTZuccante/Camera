@@ -14,9 +14,16 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static utils.Utils.RMTZ_LOGGER;
+import static utils.Utils.setupLogger;
 
 public class Preloader {
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     public static void main(String[] args) {
+        setupLogger(true);
         try {
             ServerSocket prserver = new ServerSocket(1026, 10, InetAddress.getLocalHost());
             new Thread(() -> {
@@ -25,7 +32,7 @@ public class Preloader {
                         Socket client = prserver.accept();
                         Scanner in = new Scanner(client.getInputStream());
                         while (client.isConnected()) {
-                            System.out.println(in.next());
+                            logger.info(in.next());
                         }
                     } catch (IOException e) {
                         System.exit(-1);
@@ -33,7 +40,7 @@ public class Preloader {
                 }
             }).start();
         } catch (IOException e) {
-            System.err.println("Another preloader is already running, passing arguments to it");
+            logger.log(Level.SEVERE,"Another preloader is already running, passing arguments to it");
             if (args.length > 0) {
                 try {
                     Socket client = new Socket(InetAddress.getLocalHost(), 1026);
@@ -47,11 +54,11 @@ public class Preloader {
                     out.close();
                     client.close();
                 } catch (IOException e1) {
-                    System.err.println("Cannot connect to preloader");
+                    logger.log(Level.SEVERE,"Cannot connect to preloader");
                     System.exit(-1);
                 }
             } else
-                System.err.println("No arguments to pass");
+                logger.log(Level.SEVERE,"No arguments to pass");
             System.exit(0);
         }
 
@@ -69,7 +76,7 @@ public class Preloader {
                     }
                 }
             } catch (IndexOutOfBoundsException e) {
-                System.err.println("Missing argument after [" + args[i - 1] + "]l");
+                logger.log(Level.SEVERE,"Missing argument after [" + args[i - 1] + "]l");
                 System.exit(-1);
             }
         }
@@ -89,7 +96,7 @@ public class Preloader {
 
     public static void exec(String[] args) {
         VideoCapture c = new VideoCapture(0);
-        if (!c.open(0)) System.out.println("niente");
+        if (!c.open(0)) logger.info("niente");
         Mat m = new Mat();
         while (c.isOpened() && c.read(m)) {
             HighGui.imshow("Camera", m);

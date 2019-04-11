@@ -16,15 +16,22 @@ import org.opencv.imgproc.Imgproc;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static utils.Utils.RMTZ_LOGGER;
+import static utils.Utils.setupLogger;
 
 public class Brain {
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     private static SerialPort stm;
 
     private static Thread shutdown = new Thread(() -> {
-        System.out.println("Closing serial port: " + (stm.closePort() ? "TRUE" : "FALSE"));
+        logger.info("Closing serial port: " + (stm.closePort() ? "TRUE" : "FALSE"));
     });
 
     public static void main(String[] args) {
+        setupLogger(true);
         JsonObject config = null;
         Camera left = null, right = null;
 
@@ -33,7 +40,7 @@ public class Brain {
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
         } catch (FileNotFoundException e) {
-            System.err.println("Cannot find config.json");
+            logger.log(Level.SEVERE,"Cannot find config.json");
             System.exit(-1);
         }
 
@@ -43,30 +50,30 @@ public class Brain {
                 MultiLayerNetwork model = null;
                 try {
                     model = ModelLoader.loadModel(modelpath);
-                    System.out.println("Model imported");
+                    logger.info("Model imported");
                 } catch (ModelLoader.ModelLoaderException e) {
-                    System.out.println("Error loading model " + e.getMessage());
+                    logger.info("Error loading model " + e.getMessage());
                     if (e.isCritic()) System.exit(-1);
                 }
 
                 if (model != null) {
                     left = new Camera(v.leftCameaId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, false);
                     if (!left.open(v.leftCameaId)) {
-                        System.err.println("Error opening left camera. index: " + v.leftCameaId);
-                    } else System.out.println("Left camera opened");
+                        logger.log(Level.SEVERE,"Error opening left camera. index: " + v.leftCameaId);
+                    } else logger.info("Left camera opened");
 
                     right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, true);
                     if (!right.open(v.rightCameraId)) {
-                        System.err.println("Error opening right camera. index: " + v.rightCameraId);
-                    } else System.out.println("Right camera opened");
+                        logger.log(Level.SEVERE,"Error opening right camera. index: " + v.rightCameraId);
+                    } else logger.info("Right camera opened");
 
-                    System.out.println("Cameras loaded");
+                    logger.info("Cameras loaded");
                 }
             } else {
-                System.err.println("Error loading lib, provided path may be wrong");
+                logger.log(Level.SEVERE,"Error loading lib, provided path may be wrong");
             }
         } else {
-            System.err.println("Error loading config.json");
+            logger.log(Level.SEVERE,"Error loading config.json");
             System.exit(-1);
         }
 
@@ -75,7 +82,7 @@ public class Brain {
             stm = SerialPort.getCommPort(args[0]);
         }
 
-        System.out.println("Using " + stm.getSystemPortName());
+        logger.info("Using " + stm.getSystemPortName());
         SerialConnector c = new SerialConnector(stm, 115200);
 
         c.setDebug(v.debugLevel);

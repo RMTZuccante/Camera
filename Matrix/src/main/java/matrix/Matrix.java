@@ -9,10 +9,14 @@ import matrix.cell.Cell.Victim;
 import matrix.cell.RisingCell;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static matrix.SerialConnector.*;
+import static utils.Utils.RMTZ_LOGGER;
 
 public class Matrix {
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     private static final int[] weights = new int[]{0, 1, 1, 2}; //Constant weights for pathfinding
     private Camera left, right;
@@ -47,7 +51,7 @@ public class Matrix {
                             v = Victim.valueOf("" + c);
                         }
                     } catch (IOException e) {
-                        System.err.println("Error getting frame from left camera");
+                        logger.log(Level.SEVERE,"Error getting frame from left camera");
                         left.close();
                         left = null;
                     } catch (IllegalArgumentException e) {
@@ -62,7 +66,7 @@ public class Matrix {
                             v = Victim.valueOf("" + c);
                         }
                     } catch (IOException e) {
-                        System.err.println("Error getting frame from right camera");
+                        logger.log(Level.SEVERE,"Error getting frame from right camera");
                         right.close();
                         right = null;
                     } catch (IllegalArgumentException e) {
@@ -88,10 +92,10 @@ public class Matrix {
         while (!connector.handShake()) {
             if (++i > 10) {
                 i = 0;
-                System.out.println("10 handshake failed attemps, resetting STM");
+                logger.info("10 handshake failed attemps, resetting STM");
                 connector.reset();
             }
-            System.err.println("Handshake failed!");
+            logger.log(Level.SEVERE,"Handshake failed!");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -110,7 +114,7 @@ public class Matrix {
             if (dir != null) {
                 switch (dir) {
                     case BACK:
-                        System.out.println("Go back");
+                        logger.info("Go back");
                         connector.rotate(90);
                         direction = getNewCardinalDirection(direction, Direction.RIGHT);
                         inspectCell();
@@ -118,19 +122,19 @@ public class Matrix {
                         direction = getNewCardinalDirection(direction, Direction.RIGHT);
                         break;
                     case LEFT:
-                        System.out.println("Go left");
+                        logger.info("Go left");
                         connector.rotate(-90);
                         direction = getNewCardinalDirection(direction, Direction.LEFT);
                         inspectCell();
                         break;
                     case RIGHT:
-                        System.out.println("Go right");
+                        logger.info("Go right");
                         connector.rotate(90);
                         direction = getNewCardinalDirection(direction, Direction.RIGHT);
                         inspectCell();
                         break;
                     case FRONT:
-                        System.out.println("Go straight");
+                        logger.info("Go straight");
                         break;
 
                 }
@@ -146,7 +150,7 @@ public class Matrix {
                 }
 
 
-                System.out.println("\tGo!");
+                logger.info("\tGo!");
                 go(true);
                 Thread t = new Thread(camera);
                 t.start();
@@ -160,21 +164,21 @@ public class Matrix {
                 else if (goret == GORISE) {
                     if (actual instanceof RisingCell) {
                         plane = ((RisingCell) (actual)).getOtherFloor(plane);
-                        System.out.println("Changed to floor " + ((RisingCell) (actual)).getFloorId(plane));
-                        System.out.println("isrisingcell: " + (actual instanceof RisingCell));
+                        logger.info("Changed to floor " + ((RisingCell) (actual)).getFloorId(plane));
+                        logger.info("isrisingcell: " + (actual instanceof RisingCell));
                     } else {
                         actual = new RisingCell(actual, plane);
                         plane = new Plane(actual);
                         ((RisingCell) (actual)).setNewFloor(plane);
-                        System.out.println("Changed to NEW floor " + ((RisingCell) (actual)).getFloorId(plane));
-                        System.out.println("isrisingcell: " + (actual instanceof RisingCell));
+                        logger.info("Changed to NEW floor " + ((RisingCell) (actual)).getFloorId(plane));
+                        logger.info("isrisingcell: " + (actual instanceof RisingCell));
                     }
                     firstStep.next = null;
                     addFrontCell();
                     go(true);
                 }
             } else {
-                System.out.println("Finished! MISSION COMPLETED!");
+                logger.info("Finished! MISSION COMPLETED!");
                 break;
             }
         }
@@ -191,7 +195,7 @@ public class Matrix {
                     v = Victim.valueOf("" + c);
                 }
             } catch (IOException e) {
-                System.err.println("Error getting frame from left camera");
+                logger.log(Level.SEVERE,"Error getting frame from left camera");
                 left.close();
                 left = null;
             } catch (IllegalArgumentException e) {
@@ -206,7 +210,7 @@ public class Matrix {
                     v = Victim.valueOf("" + c);
                 }
             } catch (IOException e) {
-                System.err.println("Error getting frame from right camera");
+                logger.log(Level.SEVERE,"Error getting frame from right camera");
                 right.close();
                 right = null;
             } catch (IllegalArgumentException e) {
@@ -218,32 +222,32 @@ public class Matrix {
 
     private void inspectCell() {
         Distances distances = connector.getDistances();
-        System.out.println("vf " + foundVictim);
+        logger.info("vf " + foundVictim);
 
         /*If there are no walls on some directions add a cell beside the actual one*/
         if (distances.getFrontL() > maxWallDist) { //TODO bottle
             addFrontCell();
-            System.out.println("front cell: " + distances.getFrontL());
+            logger.info("front cell: " + distances.getFrontL());
         }
         if (distances.getLeft() > maxWallDist) {
             addLeftCell();
             if (foundVictim != null && foundVictim.second == left) {
                 actual.setVictim(foundVictim.first);
-                System.out.println("Found victim " + foundVictim.second);
+                logger.info("Found victim " + foundVictim.second);
             }
-            System.out.println("left cell: " + distances.getLeft());
+            logger.info("left cell: " + distances.getLeft());
         }
         if (distances.getRight() > maxWallDist) {
             addRightCell();
             if (foundVictim != null && foundVictim.second == right) {
                 actual.setVictim(foundVictim.first);
-                System.out.println("Found victim " + foundVictim.second);
+                logger.info("Found victim " + foundVictim.second);
             }
-            System.out.println("right cell: " + distances.getRight());
+            logger.info("right cell: " + distances.getRight());
         }
         if (distances.getBack() > maxWallDist) {
             addBackCell();
-            System.out.println("back cell: " + distances.getBack());
+            logger.info("back cell: " + distances.getBack());
         }
 
         actual.setMirror(isMirror());
@@ -286,10 +290,10 @@ public class Matrix {
         if (firstStep.next == null) {
             if (pathFinding(actual, firstStep, direction) == -1) {
                 if (actual != start) {
-                    System.err.println("No more cells, ALL VISITED!, going back to home");
+                    logger.log(Level.SEVERE,"No more cells, ALL VISITED!, going back to home");
                     start.visited = false;
                     if (pathFinding(actual, firstStep, direction) == -1) {
-                        System.err.println("Failed pathfinding to home! ERROR!");
+                        logger.log(Level.SEVERE,"Failed pathfinding to home! ERROR!");
                     } else gotNewDir = true;
                 }
             } else gotNewDir = true;

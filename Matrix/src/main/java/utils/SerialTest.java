@@ -4,9 +4,15 @@ import com.fazecast.jSerialComm.SerialPort;
 import matrix.SerialConnector;
 
 import java.util.Scanner;
+import java.util.logging.Logger;
+
+import static utils.Utils.RMTZ_LOGGER;
+import static utils.Utils.setupLogger;
 
 public class SerialTest {
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     public static void main(String[] args) {
+        setupLogger(true);
         Scanner sc = new Scanner(System.in);
         SerialConnector stm = null;
 
@@ -14,7 +20,7 @@ public class SerialTest {
             stm = new SerialConnector(SerialPort.getCommPort(args[0]), 115200);
         } else {
             for (SerialPort p : SerialPort.getCommPorts()) {
-                System.out.println('\t' + p.getDescriptivePortName());
+                logger.info('\t' + p.getDescriptivePortName());
                 if (p.getDescriptivePortName().contains("Maple")) {
                     new SerialConnector(p, 115200);
                     break;
@@ -25,9 +31,9 @@ public class SerialTest {
                 stm = new SerialConnector(SerialPort.getCommPort(sc.nextLine()), 115200);
             }
         }
-        System.out.println("Port opened.");
-        while (!stm.handShake()) System.out.println("Trying handshake...");
-        System.out.println("Connected!");
+        logger.info("Port opened.");
+        while (!stm.handShake()) logger.info("Trying handshake...");
+        logger.info("Connected!");
 
         while (true) {
             System.out.print("Inserisci comando: ");
@@ -36,27 +42,27 @@ public class SerialTest {
                     System.out.print("Angle: ");
                     stm.rotate(sc.nextInt());
                     sc.nextLine(); //consuming a nextline char
-                    System.out.println("Rotate ended.");
+                    logger.info("Rotate ended.");
                     break;
                 case "go":
-                    System.out.println("Go ended with code: " + stm.go());
+                    logger.info("Go ended with code: " + stm.go());
                     break;
                 case "getdistances":
-                    System.out.println("Distances: " + stm.getDistances());
+                    logger.info("Distances: " + stm.getDistances());
                     break;
                 case "getcolor":
-                    System.out.println("Color: " + stm.getColor());
+                    logger.info("Color: " + stm.getColor());
                     break;
                 case "gettemps":
-                    System.out.println("Temperatures: " + stm.getTemps());
+                    logger.info("Temperatures: " + stm.getTemps());
                     break;
                 case "getinclination":
-                    System.out.println("Inclination: " + stm.getInclination());
+                    logger.info("Inclination: " + stm.getInclination());
                 case "victim":
                     System.out.print("Packets: ");
                     stm.victim(sc.nextInt());
                     sc.nextLine(); //consuming a nextline char
-                    System.out.println("Victim ended.");
+                    logger.info("Victim ended.");
                     break;
                 case "setdebug":
                     System.out.print("Level number: ");
@@ -69,17 +75,17 @@ public class SerialTest {
                     stm.setBlackThreshold(sc.nextByte());
                     break;
                 case "reset":
-                    System.out.println("Resetting the robot...");
+                    logger.info("Resetting the robot...");
                     stm.reset();
                     break;
                 case "getconnectioninfo":
-                    System.out.println(stm.getConnectionInfo());
+                    logger.info(stm.getConnectionInfo());
                     break;
                 case "exit":
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("Unknown command!");
+                    logger.info("Unknown command!");
                     break;
             }
         }
