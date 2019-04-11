@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import json.Values;
 import matrix.Matrix;
-import matrix.SerialConnector;
+import matrix.communication.SerialConnector;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import java.io.FileNotFoundException;
@@ -35,7 +35,7 @@ public class Brain {
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
         } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE,"Cannot find config.json");
+            logger.log(Level.SEVERE, "Cannot find config.json");
             System.exit(-1);
         }
 
@@ -54,21 +54,21 @@ public class Brain {
                 if (model != null) {
                     left = new Camera(v.leftCameaId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, false);
                     if (!left.open(v.leftCameaId)) {
-                        logger.log(Level.SEVERE,"Error opening left camera. index: " + v.leftCameaId);
+                        logger.log(Level.SEVERE, "Error opening left camera. index: " + v.leftCameaId);
                     } else logger.info("Left camera opened");
 
                     right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, true);
                     if (!right.open(v.rightCameraId)) {
-                        logger.log(Level.SEVERE,"Error opening right camera. index: " + v.rightCameraId);
+                        logger.log(Level.SEVERE, "Error opening right camera. index: " + v.rightCameraId);
                     } else logger.info("Right camera opened");
 
                     logger.info("Cameras loaded");
                 }
             } else {
-                logger.log(Level.SEVERE,"Error loading lib, provided path may be wrong");
+                logger.log(Level.SEVERE, "Error loading lib, provided path may be wrong");
             }
         } else {
-            logger.log(Level.SEVERE,"Error loading config.json");
+            logger.log(Level.SEVERE, "Error loading config.json");
             System.exit(-1);
         }
 

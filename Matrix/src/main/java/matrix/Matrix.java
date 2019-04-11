@@ -2,24 +2,26 @@ package matrix;
 
 import camera.Camera;
 import camera.Frame;
-import matrix.SerialConnector.*;
 import matrix.cartesian.Plane;
 import matrix.cell.Cell;
 import matrix.cell.Cell.Victim;
 import matrix.cell.RisingCell;
+import matrix.communication.SerialConnector;
+import matrix.communication.SerialConnector.*;
 import org.opencv.core.Rect;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static matrix.SerialConnector.*;
+import static matrix.communication.SerialConnector.*;
 import static utils.Utils.RMTZ_LOGGER;
 
 public class Matrix {
-    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
+    private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     private static final int[] weights = new int[]{0, 1, 1, 2}; //Constant weights for pathfinding
     private Camera left, right;
     private byte direction;
@@ -29,6 +31,7 @@ public class Matrix {
     private float bodyTemp;
     private Plane plane;
     private Cell lastMirror;
+    private Stack<Cell> cellsByMirror = new Stack<>();
     private Frame.Pair<Victim, Camera> foundVictim = null;
     private Random random = new Random();
     private boolean wasclimbing = false;
@@ -195,24 +198,19 @@ public class Matrix {
                 t.start();
                 int goret = connector.go();
                 t.interrupt();
+
+                cellsByMirror.push(actual);
+
                 if (goret == GOBLACK) {
                     wasclimbing = false;
                     actual.setBlack(true);
                     firstStep.next = null;
                     go(false);
+                    cellsByMirror.pop();
                 } else if (goret == GOOBSTACLE) {
                     wasclimbing = false;
                     actual.weight = 10;
                 } else if (goret == GORISE) {
-                    if (wasclimbing) {
-                        logger.log(Level.SEVERE, "Fake end of rise detected");
-                        actual.unset();
-                        plane.remove();
-                        go(false);
-                        if (actual instanceof RisingCell) logger.log(Level.SEVERE, "\tSolved");
-                        else logger.log(Level.SEVERE, "\tNot solved, Nico fix it!");
-                    }
-
                     if (actual instanceof RisingCell) {
                         logger.info("Changed floor");
                     } else {
@@ -223,12 +221,43 @@ public class Matrix {
                     firstStep.next = null;
                     addFrontCell();
                     go(true);
+                    cellsByMirror.push(actual);
                 } else wasclimbing = false;
             } else {
                 logger.info("Finished! MISSION COMPLETED!");
                 break;
             }
         }
+    }
+
+    void backToCheckPoint(int remove) {
+        if (cellsByMirror.size() > 1) {
+            actual = cellsByMirror.pop();
+            while (!cellsByMirror.empty()) {
+                Cell now = cellsByMirror.pop();
+                byte gotodir = actual.getCardinalOfCell(now);
+                if (gotodir != -1) {
+                    if (remove > 0) {
+                        remove--;
+                        actual.unset();
+                        plane.remove();
+                    }
+                    plane.move(gotodir);
+                    if (plane.get() != now) {
+                        //TODO reset
+                    }
+                    actual = now;
+                } else {
+                    //TODO reset
+                }
+            }
+            if (actual != lastMirror) {
+                //TODO reset
+            }
+            cellsByMirror.add(actual);
+        }
+        firstStep.next = null;
+        direction = NORTH;
     }
 
     private void inspectCell() {
@@ -264,7 +293,12 @@ public class Matrix {
             logger.info("back cell: " + distances.getBack());
         }
 
-        actual.setMirror(isMirror());
+        if (isMirror()) {
+            actual.setMirror(true);
+            lastMirror = actual;
+            cellsByMirror.removeAllElements();
+            cellsByMirror.add(actual);
+        }
         actual.visited = true; //Mark the cell as visited
     }
 
@@ -280,13 +314,14 @@ public class Matrix {
 
     private boolean isMirror() {
         Color color = connector.getColor();
+
         // TODO improve detections rules
         return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
     }
 
 
     private boolean isVictim(float temp, float ambient) {
-        logger.log(Level.INFO,temp +" "+bodyTemp);
+        logger.log(Level.INFO, temp + " " + bodyTemp);
         // TODO improve detections rules
         return (temp) > bodyTemp;
     }

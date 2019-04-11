@@ -1,7 +1,7 @@
 package utils;
 
 import com.fazecast.jSerialComm.SerialPort;
-import matrix.SerialConnector;
+import matrix.communication.SerialConnector;
 
 import java.util.Scanner;
 import java.util.logging.Logger;

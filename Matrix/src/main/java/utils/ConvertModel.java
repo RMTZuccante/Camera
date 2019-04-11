@@ -16,6 +16,7 @@ import static utils.Utils.setupLogger;
 
 public class ConvertModel {
     private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
+
     public static void main(String[] args) {
         setupLogger(true);
         try {
@@ -25,11 +26,11 @@ public class ConvertModel {
             ModelSerializer.writeModel(model, new File("./model/model.dl4j"), true);
             logger.info("Model converted");
         } catch (IOException e) {
-            logger.log(Level.SEVERE,"File not found");
+            logger.log(Level.SEVERE, "File not found");
         } catch (UnsupportedKerasConfigurationException e) {
-            logger.log(Level.SEVERE,"Unsupported Keras configuration");
+            logger.log(Level.SEVERE, "Unsupported Keras configuration");
         } catch (InvalidKerasConfigurationException e) {
-            logger.log(Level.SEVERE,"Invalid Keras configuration");
+            logger.log(Level.SEVERE, "Invalid Keras configuration");
         }
     }
 }

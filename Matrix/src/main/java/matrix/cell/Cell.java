@@ -1,20 +1,14 @@
 package matrix.cell;
 
+import matrix.Matrix;
+
 public class Cell {
-    protected Cell north, south, east, west;
     public boolean visited;
-    protected boolean mirror, black;
-    protected Victim victim;
     public boolean considered = false; //Needed for pathinding not to pass on the same cell while looking
     public int weight;
-
-    public enum Victim {
-        NONE,
-        H,
-        S,
-        U,
-        HEAT
-    }
+    protected Cell north, south, east, west;
+    protected boolean mirror, black;
+    protected Victim victim;
 
     public Cell() {
         north = south = east = west = null;
@@ -39,6 +33,14 @@ public class Cell {
             east = east.west = null;
         if (west != null)
             west = west.east = null;
+    }
+
+    public byte getCardinalOfCell(Cell c) {
+        if (c == north) return Matrix.NORTH;
+        else if (c == south) return Matrix.SOUTH;
+        else if (c == east) return Matrix.EAST;
+        else if (c == west) return Matrix.WEST;
+        else return -1;
     }
 
     public boolean isMirror() {
@@ -95,5 +97,13 @@ public class Cell {
 
     public void setWest(Cell west) {
         this.west = west;
+    }
+
+    public enum Victim {
+        NONE,
+        H,
+        S,
+        U,
+        HEAT
     }
 }
