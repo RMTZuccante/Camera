@@ -83,6 +83,10 @@ public class SerialTest {
                     case "getconnectioninfo":
                         logger.info(stm.getConnectionInfo());
                         break;
+                    case "mirror":
+                        logger.info("Signaling mirror!");
+                        stm.mirror();
+                        break;
                     case "exit":
                         System.exit(0);
                         break;

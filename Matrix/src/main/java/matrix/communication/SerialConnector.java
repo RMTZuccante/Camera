@@ -15,7 +15,7 @@ import static utils.Utils.RMTZ_LOGGER;
 public class SerialConnector {
     public final static int GOBLACK = 1, GOOBSTACLE = 2, GORISE = 3;
     private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
-    private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET = 10, GETINCLINATION = 11;
+    private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET = 10, GETINCLINATION = 11, MIRROR = 12;
     private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
     public SerialPort stm;
@@ -195,6 +195,12 @@ public class SerialConnector {
     public synchronized void reset() throws InterruptedException {
         waitReady();
         buffer[0] = RESET;
+        stm.writeBytes(buffer, 1);
+    }
+
+    public synchronized void mirror() throws InterruptedException {
+        waitReady();
+        buffer[0] = MIRROR;
         stm.writeBytes(buffer, 1);
     }
 
