@@ -2,10 +2,12 @@ package matrix;
 
 import camera.Camera;
 import camera.Frame;
+import com.fazecast.jSerialComm.SerialPort;
 import matrix.cartesian.Plane;
 import matrix.cell.Cell;
 import matrix.cell.Cell.Victim;
 import matrix.cell.RisingCell;
+import matrix.communication.CheckPointSaver;
 import matrix.communication.SerialConnector;
 import matrix.communication.SerialConnector.*;
 import org.opencv.core.Rect;
@@ -23,9 +25,9 @@ public class Matrix {
     public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     private static final int[] weights = new int[]{0, 1, 1, 2}; //Constant weights for pathfinding
+    public SerialConnector connector;
     private Camera left, right;
     private byte direction;
-    private SerialConnector connector;
     private int maxWallDist;
     private Cell start, actual;
     private float bodyTemp;
@@ -35,6 +37,9 @@ public class Matrix {
     private Frame.Pair<Victim, Camera> foundVictim = null;
     private Random random = new Random();
     private boolean wasclimbing = false;
+    private CheckPointSaver cp = new CheckPointSaver();
+    private byte debugLevel, black;
+    private Thread current;
 
     private Step firstStep = new Step();
 
@@ -118,119 +123,139 @@ public class Matrix {
         this.maxWallDist = maxWallDist;
         this.bodyTemp = bodyTemp;
         direction = NORTH;
+        start = actual = lastMirror = new Cell();
+        plane = new Plane(start);
     }
 
+
     public void start(byte debugLevel, byte black) {
-        while (!connector.handShake()) {
-            System.out.println("hand");
+        current = Thread.currentThread();
+        this.debugLevel = debugLevel;
+        this.black = black;
+        try {
+            while (!connector.handShake()) {
+                System.out.println("hand");
             /*if (++i > 10) {
                 i = 0;
                 logger.info("10 handshake failed attemps, resetting STM");
                 connector.reset();
             }*/
-            logger.log(Level.SEVERE, "Handshake failed!");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.exit(-1);
+                logger.log(Level.SEVERE, "Handshake failed!");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
             }
-        }
-        connector.setDebug(debugLevel);
-        connector.setBlackThreshold(black);
+            connector.setDebug(debugLevel);
+            connector.setBlackThreshold(black);
 
-        start = actual = lastMirror = new Cell();
-        plane = new Plane(start);
+            for (int i = 0; i < random.nextInt(10); i++) random.nextBoolean();
 
-        for (int i = 0; i < random.nextInt(10); i++) random.nextBoolean();
+            Thread t = null;
 
-        Thread t = null;
-
-        while (true) {
-            t = new Thread(camera);
-            boolean victimfound = actual.getVictim() != Victim.NONE;
             inspectCell();
-            Direction dir = nextDirection();
-            if (dir != null) {
-                t.start();
-                switch (dir) {
-                    case BACK:
-                        logger.info("Go back");
-                        connector.rotate(90);
-                        direction = getNewCardinalDirection(direction, Direction.RIGHT);
-                        inspectCell();
-                        connector.rotate(90);
-                        direction = getNewCardinalDirection(direction, Direction.RIGHT);
-                        break;
-                    case LEFT:
-                        logger.info("Go left");
-                        connector.rotate(-90);
-                        direction = getNewCardinalDirection(direction, Direction.LEFT);
-                        inspectCell();
-                        break;
-                    case RIGHT:
-                        logger.info("Go right");
-                        connector.rotate(90);
-                        direction = getNewCardinalDirection(direction, Direction.RIGHT);
-                        inspectCell();
-                        break;
-                    case FRONT:
-                        logger.info("Go straight");
-                        break;
+            CheckPointSaver.listen(this);
 
-                }
-                t.interrupt();
-                if (actual.getVictim() != Victim.NONE && !victimfound) {
-                    int packages = 0;
-
-                    if (actual.getVictim() == Victim.HEAT || actual.getVictim() == Victim.S) {
-                        packages = 1;
-                    } else if (actual.getVictim() == Victim.H) {
-                        packages = 2;
-                    }
-                    connector.victim(packages);
-                }
-
-
-                logger.info("\tGo!");
-                go(true);
+            while (true) {
                 t = new Thread(camera);
-                t.start();
-                int goret = connector.go();
-                t.interrupt();
+                boolean victimfound = actual.getVictim() != Victim.NONE;
+                inspectCell();
+                Direction dir = nextDirection();
+                if (dir != null) {
+                    t.start();
+                    switch (dir) {
+                        case BACK:
+                            logger.info("Go back");
+                            connector.rotate(90);
+                            direction = getNewCardinalDirection(direction, Direction.RIGHT);
+                            inspectCell();
+                            connector.rotate(90);
+                            direction = getNewCardinalDirection(direction, Direction.RIGHT);
+                            break;
+                        case LEFT:
+                            logger.info("Go left");
+                            connector.rotate(-90);
+                            direction = getNewCardinalDirection(direction, Direction.LEFT);
+                            inspectCell();
+                            break;
+                        case RIGHT:
+                            logger.info("Go right");
+                            connector.rotate(90);
+                            direction = getNewCardinalDirection(direction, Direction.RIGHT);
+                            inspectCell();
+                            break;
+                        case FRONT:
+                            logger.info("Go straight");
+                            break;
 
-                cellsByMirror.push(actual);
-
-                if (goret == GOBLACK) {
-                    wasclimbing = false;
-                    actual.setBlack(true);
-                    firstStep.next = null;
-                    go(false);
-                    cellsByMirror.pop();
-                } else if (goret == GOOBSTACLE) {
-                    wasclimbing = false;
-                    actual.weight = 10;
-                } else if (goret == GORISE) {
-                    if (actual instanceof RisingCell) {
-                        logger.info("Changed floor");
-                    } else {
-                        actual = new RisingCell(actual, plane);
-                        logger.info("Changed to NEW floor");
                     }
-                    wasclimbing = true;
-                    firstStep.next = null;
-                    addFrontCell();
+                    t.interrupt();
+                    if (actual.getVictim() != Victim.NONE && !victimfound) {
+                        int packages = 0;
+
+                        if (actual.getVictim() == Victim.HEAT || actual.getVictim() == Victim.S) {
+                            packages = 1;
+                        } else if (actual.getVictim() == Victim.H) {
+                            packages = 2;
+                        }
+                        connector.victim(packages);
+                    }
+
+
+                    logger.info("\tGo!");
                     go(true);
+                    t = new Thread(camera);
+                    t.start();
+                    int goret = connector.go();
+                    t.interrupt();
+
                     cellsByMirror.push(actual);
-                } else wasclimbing = false;
-            } else {
-                logger.info("Finished! MISSION COMPLETED!");
-                break;
+
+                    if (goret == GOBLACK) {
+                        wasclimbing = false;
+                        actual.setBlack(true);
+                        firstStep.next = null;
+                        go(false);
+                        cellsByMirror.pop();
+                    } else if (goret == GOOBSTACLE) {
+                        wasclimbing = false;
+                        actual.weight = 10;
+                    } else if (goret == GORISE) {
+                        if (actual instanceof RisingCell) {
+                            logger.info("Changed floor");
+                        } else {
+                            actual = new RisingCell(actual, plane);
+                            logger.info("Changed to NEW floor");
+                        }
+                        wasclimbing = true;
+                        firstStep.next = null;
+                        addFrontCell();
+                        go(true);
+                        cellsByMirror.push(actual);
+                    } else wasclimbing = false;
+                } else {
+                    logger.info("Finished! MISSION COMPLETED!");
+                    break;
+                }
             }
+        } catch (InterruptedException e) {
+
+        } catch (Exception e) {
+            String s = "Uncaught exception:\n";
+            for (StackTraceElement el : e.getStackTrace()) {
+                s += el;
+            }
+            logger.log(Level.SEVERE, s);
         }
     }
 
-    void backToCheckPoint(int remove) {
+    public void backToCheckPoint(int remove) {
+        CheckPointSaver.stopListening();
+        Matrix newMat = new Matrix(connector, left, right, maxWallDist, bodyTemp);
+        connector.stm.closePort();
+        SerialConnector c = new SerialConnector(SerialPort.getCommPort(connector.stm.getSystemPortName()), connector.stm.getBaudRate());
         if (cellsByMirror.size() > 1) {
             actual = cellsByMirror.pop();
             while (!cellsByMirror.empty()) {
@@ -241,6 +266,9 @@ public class Matrix {
                         remove--;
                         actual.unset();
                         plane.remove();
+                    } else if (remove == 0) {
+                        actual.weight = 10;
+                        remove--;
                     }
                     plane.move(gotodir);
                     if (plane.get() != now) {
@@ -258,9 +286,18 @@ public class Matrix {
         }
         firstStep.next = null;
         direction = NORTH;
+        newMat.direction = direction;
+        newMat.actual = actual;
+        newMat.plane = plane;
+        newMat.start = start;
+        newMat.lastMirror = lastMirror;
+        new Thread(() -> {
+            newMat.start(debugLevel, black);
+        }).start();
+        current.interrupt();
     }
 
-    private void inspectCell() {
+    private void inspectCell() throws InterruptedException {
         Distances distances = connector.getDistances();
         if (foundVictim != null) logger.info("Found Victim! " + foundVictim);
 
@@ -312,7 +349,7 @@ public class Matrix {
         plane.move(dir);
     }
 
-    private boolean isMirror() {
+    private boolean isMirror() throws InterruptedException {
         Color color = connector.getColor();
 
         // TODO improve detections rules

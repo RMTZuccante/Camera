@@ -81,6 +81,8 @@ public class Brain {
         SerialConnector c = new SerialConnector(stm, 115200);
         Matrix m = new Matrix(c, left, right, v.distwall, v.bodytemp);
         Runtime.getRuntime().addShutdownHook(shutdown);
-        m.start(v.debugLevel, v.black);
+        new Thread(() -> {
+            m.start(v.debugLevel, v.black);
+        }).start();
     }
 }

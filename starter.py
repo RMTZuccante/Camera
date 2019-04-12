@@ -3,8 +3,7 @@ import subprocess
 
 import RPi.GPIO as GPIO
 
-resetPin = 20
-checkpointPin = 21
+import pins
 
 process = None
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -21,16 +20,15 @@ def reset(_):
 
 
 def backToCheckpoint(_):
+    print('Back to checkpoint')
     clientSocket.send(code)
 
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(resetPin, GPIO.IN)
-GPIO.setmode(checkpointPin, GPIO.IN)
+GPIO.add_event_detect(pins.resetPin, GPIO.FALLING, callback=reset, bouncetime=500)
+GPIO.add_event_detect(pins.checkpointPin, GPIO.FALLING, callback=backToCheckpoint, bouncetime=500)
 
-GPIO.add_event_detect(resetPin, GPIO.FALLING, callback=reset, bouncetime=500)
-GPIO.add_event_detect(checkpointPin, GPIO.FALLING, callback=backToCheckpoint, bouncetime=500)
-
-while True:
-    pass
-
+try:
+    while True:
+        pass
+except KeyboardInterrupt:
+    subprocess.call(['fuser', '-k', '/dev/ttyAMA0'])

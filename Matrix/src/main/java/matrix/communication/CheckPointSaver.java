@@ -1,5 +1,7 @@
 package matrix.communication;
 
+import matrix.Matrix;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -14,33 +16,28 @@ public class CheckPointSaver extends Thread {
     private static DatagramSocket socket;
     private static byte[] recv = new byte[1];
     private static CheckPointSaver instange;
+    private static Matrix mat;
+    private static boolean lock = false;
 
-    private CheckPointSaver() {
-
-    }
-
-    public static void foo() {
-        if (instange != null && instange.isAlive()) {
-            socket.close();
-            instange.interrupt();
-            try {
-                instange.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public static void listen(Matrix mat) {
+        stopListening();
         try {
             socket = new DatagramSocket(1042);
         } catch (SocketException e) {
             logger.log(Level.SEVERE, "Error opening socket: " + e.getMessage());
             System.exit(-1);
         }
+        CheckPointSaver.mat = mat;
         instange = new CheckPointSaver();
         instange.start();
     }
 
-    public static void main(String[] args) {
-        CheckPointSaver.foo();
+    public static void stopListening() {
+        if (instange != null && instange.isAlive()) {
+            socket.close();
+            instange.interrupt();
+            instange = null;
+        }
     }
 
     @Override
@@ -51,6 +48,7 @@ public class CheckPointSaver extends Thread {
                 socket.receive(recvPacket);
                 if (recv[0] == 42) {
                     logger.log(Level.SEVERE, "Lack of progress, setting position to last checkpoint");
+                    CheckPointSaver.mat.backToCheckPoint(0);
                 }
             } catch (IOException e) {
             }

@@ -17,9 +17,9 @@ public class SerialConnector {
     private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
     private final static byte HANDSHAkE = 1, ROTATE = 2, GO = 3, GETDISTANCES = 4, GETCOLOR = 5, GETTEMPS = 6, VICTIM = 7, SETDEBUG = 8, SETBLACK = 9, RESET = 10, GETINCLINATION = 11;
     private final static byte STX = 2, ETX = 3, RES = -128, READY = 8;
-    private byte[] buffer = new byte[20];
     /* jSerialComm page http://fazecast.github.io/jSerialComm/ */
-    private SerialPort stm;
+    public SerialPort stm;
+    private byte[] buffer = new byte[20];
     private boolean ready;
     private byte status;
     private byte toRead;
@@ -96,7 +96,7 @@ public class SerialConnector {
         return success;
     }
 
-    public synchronized void rotate(int angle) {
+    public synchronized void rotate(int angle) throws InterruptedException {
         boolean rot = true;
         if (angle < 0) {
             rot = false;
@@ -105,7 +105,7 @@ public class SerialConnector {
         rotate(angle, rot);
     }
 
-    public synchronized void rotate(int angle, boolean right) {
+    public synchronized void rotate(int angle, boolean right) throws InterruptedException {
         waitReady();
         buffer[0] = ROTATE;
         buffer[1] = (byte) (right ? 0 : 1);
@@ -114,14 +114,14 @@ public class SerialConnector {
         waitResult();
     }
 
-    public synchronized int go() {
+    public synchronized int go() throws InterruptedException {
         waitReady();
         buffer[0] = GO;
         stm.writeBytes(buffer, 1);
         return waitResult();
     }
 
-    public synchronized void victim(int packets) {
+    public synchronized void victim(int packets) throws InterruptedException {
         waitReady();
         buffer[0] = VICTIM;
         buffer[1] = (byte) packets;
@@ -129,7 +129,7 @@ public class SerialConnector {
         waitResult();
     }
 
-    public synchronized Distances getDistances() {
+    public synchronized Distances getDistances() throws InterruptedException {
         waitReady();
         toRead = 10;
         buffer[0] = GETDISTANCES;
@@ -142,7 +142,7 @@ public class SerialConnector {
         return new Distances(arr[0], arr[3], arr[2], arr[1], arr[4]);
     }
 
-    public synchronized Color getColor() {
+    public synchronized Color getColor() throws InterruptedException {
         waitReady();
         toRead = 8;
         buffer[0] = GETCOLOR;
@@ -155,7 +155,7 @@ public class SerialConnector {
         return new Color(Short.toUnsignedInt(arr[0]), Short.toUnsignedInt(arr[1]), Short.toUnsignedInt(arr[2]), Short.toUnsignedInt(arr[3]));
     }
 
-    public synchronized Temps getTemps() {
+    public synchronized Temps getTemps() throws InterruptedException {
         waitReady();
         toRead = 12;
         buffer[0] = GETTEMPS;
@@ -168,7 +168,7 @@ public class SerialConnector {
         return new Temps(arr[0], arr[1], arr[2]);
     }
 
-    public synchronized float getInclination() {
+    public synchronized float getInclination() throws InterruptedException {
         waitReady();
         toRead = 4;
         buffer[0] = GETINCLINATION;
@@ -178,49 +178,45 @@ public class SerialConnector {
         return ByteBuffer.wrap(buffer, 0, 4).order(ByteOrder.LITTLE_ENDIAN).getFloat();
     }
 
-    public synchronized void setDebug(byte level) {
+    public synchronized void setDebug(byte level) throws InterruptedException {
         waitReady();
         buffer[0] = SETDEBUG;
         buffer[1] = level;
         stm.writeBytes(buffer, 2);
     }
 
-    public synchronized void setBlackThreshold(byte blackThreshold) {
+    public synchronized void setBlackThreshold(byte blackThreshold) throws InterruptedException {
         waitReady();
         buffer[0] = SETBLACK;
         buffer[1] = blackThreshold;
         stm.writeBytes(buffer, 2);
     }
 
-    public synchronized void reset() {
+    public synchronized void reset() throws InterruptedException {
         waitReady();
         buffer[0] = RESET;
         stm.writeBytes(buffer, 1);
     }
 
-    private synchronized void waitFor(byte purpose) {
+    private synchronized void waitFor(byte purpose) throws InterruptedException {
         while (status != -purpose) waitTC();
         status = -1;
     }
 
-    private synchronized void waitReady() {
+    private synchronized void waitReady() throws InterruptedException {
         while (!ready) waitTC();
         ready = false;
     }
 
-    private synchronized byte waitResult() {
+    private synchronized byte waitResult() throws InterruptedException {
         while (status < 0) waitTC();
         byte out = status;
         status = -1;
         return out;
     }
 
-    private synchronized void waitTC() {
-        try {
-            wait();
-        } catch (InterruptedException e) {
-            logger.log(Level.SEVERE, "Error while waiting for the robot to be ready...");
-        }
+    private synchronized void waitTC() throws InterruptedException {
+        wait();
     }
 
     public String getConnectionInfo() {
