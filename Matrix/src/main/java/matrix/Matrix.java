@@ -13,6 +13,8 @@ import matrix.communication.SerialConnector.*;
 import org.opencv.core.Rect;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -24,7 +26,7 @@ import static utils.Utils.RMTZ_LOGGER;
 public class Matrix {
     public final static byte NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3;
     private final static Logger logger = Logger.getLogger(RMTZ_LOGGER);
-    private static final int[] weights = new int[]{0, 1, 1, 2}; //Constant weights for pathfinding
+    private static final int[] weights = new int[]{0, 0, 0, 1}; //Constant weights for pathfinding
     public SerialConnector connector;
     private Camera left, right;
     private byte direction;
@@ -40,6 +42,7 @@ public class Matrix {
     private CheckPointSaver cp = new CheckPointSaver();
     private byte debugLevel, black;
     private Thread current;
+    private int ambient = 0;
 
     private Step firstStep = new Step();
 
@@ -151,6 +154,11 @@ public class Matrix {
             connector.setDebug(debugLevel);
             connector.setBlackThreshold(black);
 
+            ambient = connector.getColor().getAmbient();
+            ambient -= ambient * 0.05;
+            lastMirror = actual;
+            cellsByMirror.add(actual);
+
             for (int i = 0; i < random.nextInt(10); i++) random.nextBoolean();
 
             Thread t = null;
@@ -253,9 +261,9 @@ public class Matrix {
 
     public void backToCheckPoint(int remove) {
         CheckPointSaver.stopListening();
-        Matrix newMat = new Matrix(connector, left, right, maxWallDist, bodyTemp);
         connector.stm.closePort();
         SerialConnector c = new SerialConnector(SerialPort.getCommPort(connector.stm.getSystemPortName()), connector.stm.getBaudRate());
+        Matrix newMat = new Matrix(c, left, right, maxWallDist, bodyTemp);
         if (cellsByMirror.size() > 1) {
             actual = cellsByMirror.pop();
             while (!cellsByMirror.empty()) {
@@ -332,6 +340,7 @@ public class Matrix {
 
         if (isMirror()) {
             actual.setMirror(true);
+            connector.mirror();
             lastMirror = actual;
             cellsByMirror.removeAllElements();
             cellsByMirror.add(actual);
@@ -350,10 +359,11 @@ public class Matrix {
     }
 
     private boolean isMirror() throws InterruptedException {
-        Color color = connector.getColor();
+        return false;
+        /*Color color = connector.getColor();
 
         // TODO improve detections rules
-        return (color.getBlue() < color.getGreen()) && color.getRed() < color.getGreen();
+        return color.getAmbient() > ambient;*/
     }
 
 
@@ -403,15 +413,16 @@ public class Matrix {
             if (cell.visited) { //If the cell is already visited keep looking
                 cell.considered = true; //Mark the cell as considered
                 Step[] steps;
+                ArrayList<Step> rand = new ArrayList<>();
+                rand.add(new Step(Direction.FRONT));
+                rand.add(new Step(Direction.RIGHT));
+                rand.add(new Step(Direction.LEFT));
+                Collections.shuffle(rand);
 
-                if (random.nextBoolean())
-                    steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.RIGHT), new Step(Direction.LEFT), new Step(Direction.BACK)}; //Directions ordered to check the path
-                else
-                    steps = new Step[]{new Step(Direction.FRONT), new Step(Direction.LEFT), new Step(Direction.RIGHT), new Step(Direction.BACK)}; //Directions ordered to check the path
+                steps = new Step[]{rand.get(0), rand.get(1), rand.get(2), new Step(Direction.BACK)}; //Directions ordered to check the path
 
-                byte[] cardinals = new byte[]{direction, getNewCardinalDirection(direction, steps[1].direction), getNewCardinalDirection(direction, steps[2].direction), getNewCardinalDirection(direction, Direction.BACK)}; //Set cardinal directions
+                byte[] cardinals = new byte[]{getNewCardinalDirection(direction, steps[0].direction), getNewCardinalDirection(direction, steps[1].direction), getNewCardinalDirection(direction, steps[2].direction), getNewCardinalDirection(direction, Direction.BACK)}; //Set cardinal directions
                 int pos = -1; //Index of found shortest path to new cell
-
                 for (int i = 0; i < 4; i++) {
                     int tempw = pathFinding(getCellByCardinalDirection(cell, cardinals[i]), steps[i], cardinals[i]); //Temporary weight of calculated path
                     if (tempw != -1) { //If the calculated path found a new cell
@@ -478,7 +489,7 @@ public class Matrix {
         if (direction == south && actual.getNorth() == null) {
             actual.setNorth(plane.getNear(NORTH));
             if (actual.getNorth() == null) {
-                System.out.print("new ");
+                logger.info("new");
                 actual.setNorth(new Cell());
                 plane.setNear(NORTH, actual.getNorth());
             }
@@ -486,7 +497,7 @@ public class Matrix {
         } else if (direction == north && actual.getSouth() == null) {
             actual.setSouth(plane.getNear(SOUTH));
             if (actual.getSouth() == null) {
-                System.out.print("new ");
+                logger.info("new");
                 actual.setSouth(new Cell());
                 plane.setNear(SOUTH, actual.getSouth());
             }
@@ -494,7 +505,7 @@ public class Matrix {
         } else if (direction == west && actual.getEast() == null) {
             actual.setEast(plane.getNear(EAST));
             if (actual.getEast() == null) {
-                System.out.print("new ");
+                logger.info("new");
                 actual.setEast(new Cell());
                 plane.setNear(EAST, actual.getEast());
             }
@@ -502,7 +513,7 @@ public class Matrix {
         } else if (direction == east && actual.getWest() == null) {
             actual.setWest(plane.getNear(WEST));
             if (actual.getWest() == null) {
-                System.out.print("new ");
+                logger.info("new");
                 actual.setWest(new Cell());
                 plane.setNear(WEST, actual.getWest());
             }
