@@ -2,12 +2,10 @@ package utils;
 
 import camera.Camera;
 import camera.Frame.Pair;
-import camera.ModelLoader;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import json.Values;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -35,12 +33,10 @@ public class CameraTest {
         JsonObject config = null;
         Camera left = null, right = null;
 
-        String modelpath = "../model/model.dl4j";
-
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
         } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE,"Cannot find config.json");
+            logger.log(Level.SEVERE, "Cannot find config.json");
             System.exit(-1);
         }
 
@@ -48,31 +44,20 @@ public class CameraTest {
 
         if (v.load()) {
             if (Camera.loadLib(v.libpath)) {
-                MultiLayerNetwork model = null;
-                try {
-                    model = ModelLoader.loadModel(modelpath);
-                } catch (ModelLoader.ModelLoaderException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
+                left = new Camera(v.leftCameaId, v.minArea, v.maxAra, v.thresh, v.paddings, false);
+                if (!left.open()) {
+                    logger.log(Level.SEVERE, "Error opening left camera. index: " + v.leftCameaId);
+                } else logger.info("Left camera opened");
 
-                if (model != null) {
-                    left = new Camera(v.leftCameaId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, false);
-                    right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, true);
-
-                    if (!left.open(v.leftCameaId)) {
-                        logger.log(Level.SEVERE,"Error opening left camera. index: " + v.leftCameaId);
-                    }
-
-                    if (!right.open(v.rightCameraId)) {
-                        logger.log(Level.SEVERE,"Error opening right camera. index: " + v.rightCameraId);
-                    }
-                }
+                right = new Camera(v.rightCameraId, v.minArea, v.maxAra, v.thresh, v.paddings, true);
+                if (!right.open()) {
+                    logger.log(Level.SEVERE, "Error opening right camera. index: " + v.rightCameraId);
+                } else logger.info("Right camera opened");
             } else {
-                logger.log(Level.SEVERE,"Error loading lib, provided path may be wrong");
+                logger.log(Level.SEVERE, "Error loading lib, provided path may be wrong");
             }
         } else {
-            logger.log(Level.SEVERE,"Error loading config.json");
+            logger.log(Level.SEVERE, "Error loading config.json");
         }
 
         if (left != null) while (left.isOpened() || right.isOpened()) {

@@ -1,11 +1,10 @@
 package camera;
 
-import org.datavec.image.loader.NativeImageLoader;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.opencv.core.*;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class Frame extends Mat {
@@ -26,64 +25,44 @@ public class Frame extends Mat {
     }
 
     public synchronized Pair<Character, Rect> predictWithShape() {
-        Imgproc.GaussianBlur(this, this, new Size(5, 5), 0);
-        Pair<Character, Rect> pred = new Pair<>(null, null);
-        Pair<ArrayList<MatOfPoint>, Mat> found = findShapes();
-        double prob = 0;
-        for (MatOfPoint c : found.first) {
-            Rect bound = Imgproc.boundingRect(c);
-            INDArray arr = getInputImage(found.second, bound);
-            INDArray predict = cam.model.output(arr);
-            if (predict.amax().getDouble(0) >= cam.precision && predict.amax().getDouble(0) > prob) {
-                prob = predict.amax().getDouble(0);
-                pred.first = Camera.ref[predict.argMax().getInt(0)];
-                pred.second = bound;
+        char character = 0;
+        Pair<ArrayList<MatOfPoint>, Mat> shapes = findShapes();
+        for (MatOfPoint cont : shapes.first) {
+            Rect bounding = Imgproc.boundingRect(cont);
+            double area = Imgproc.contourArea(cont);
+            if (bounding.height > bounding.width && area >= cam.min && area <= cam.max) {
+                bounding.height *= 0.6;
+                Mat cropped = new Mat(shapes.second, bounding);
+                Mat edges = new Mat();
+                Imgproc.Canny(cropped, edges, 75, 150);
+                Mat lines = new Mat();
+                Imgproc.HoughLinesP(edges, lines, 1, Math.PI / 180, 30, 0, 250);
+                Mat corners = new Mat();
+                Imgproc.cornerHarris(edges, corners, 2, 3, 0.04);
+                if (corners.rows() > 70) {
+                    // S 2 U 4 H 6
+                    int r = lines.rows();
+                    if (r > 5 && r < 10) character = 'H';
+                    else if (r > 3 && r < 6) character = 'U';
+                    else if (r < 3 && r > 0) character = 'S';
+                }
+                if (character != 0) {
+                    return new Pair<>(character, bounding);
+                }
             }
         }
-        return pred.first == null ? null : pred;
-    }
-
-    private INDArray getInputImage(Mat img, Rect rect) {
-        try {
-            img = new Mat(img, new Rect(rect.x - cam.offset, rect.y - cam.offset, rect.height + cam.offset * 2, rect.width + cam.offset * 2));
-        } catch (CvException e) {
-            img = new Mat(img, rect);
-        }
-        Imgproc.resize(img, img, new Size(80, 80));
-        NativeImageLoader loader = new NativeImageLoader(80, 80, 1);
-        try {
-            INDArray mat = loader.asMatrix(img);
-            mat.div(255.0);
-            return mat;
-        } catch (IOException e) {
-            return null;
-        }
+        return null;
     }
 
     private Pair<ArrayList<MatOfPoint>, Mat> findShapes() {
         Mat gray = new Mat();
-        Mat threshold = new Mat();
         Imgproc.cvtColor(this, gray, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.threshold(gray, threshold, cam.black, 255, Imgproc.THRESH_BINARY);
+        Mat threshold = new Mat();
+        Imgproc.threshold(gray, threshold, cam.black, 225, Imgproc.THRESH_BINARY);
+        ArrayList<MatOfPoint> contours = new ArrayList<>(2);
+        Imgproc.findContours(threshold, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+        return new Pair<>(contours, gray);
 
-        ArrayList<MatOfPoint> conts = new ArrayList<>(5);
-        ArrayList<MatOfPoint> candidates = new ArrayList<>(3);
-
-        Imgproc.findContours(threshold, conts, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        if (cam.min != -1 && cam.max != -1) {
-            for (MatOfPoint c : conts) {
-                double area = Imgproc.contourArea(c);
-                Rect r = Imgproc.boundingRect(c);
-                if (r.height > r.width && area >= cam.min && area <= cam.max) candidates.add(c);
-            }
-        } else {
-            for (MatOfPoint c : conts) {
-                Rect r = Imgproc.boundingRect(c);
-                if (r.height > r.width) candidates.add(c);
-            }
-        }
-        return new Pair<>(candidates, gray);
     }
 
     public static class Pair<A, B> {

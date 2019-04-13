@@ -10,7 +10,6 @@ import matrix.cell.RisingCell;
 import matrix.communication.CheckPointSaver;
 import matrix.communication.SerialConnector;
 import matrix.communication.SerialConnector.*;
-import org.opencv.core.Rect;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,75 +46,62 @@ public class Matrix {
     private Step firstStep = new Step();
 
     private Runnable camera = new Runnable() {
+        private boolean go = true;
+
         @Override
         public void run() {
-            int ril = 2;
             foundVictim = null;
             boolean r = false, l = false;
             try {
                 Thread.sleep(750);
             } catch (InterruptedException e) {
             }
-            char v = 0;
-            double area = 0;
+            char chr = 0;
             int count = 0;
             Camera cam = null;
-            Frame.Pair<Character, Rect> pred;
-            while (!Thread.interrupted() && (!l || !r)) {
+            while (go && !l || !r) {
                 if (left != null && left.isOpened()) {
                     try {
-                        pred = left.capture().predictWithShape();
-                        char c = pred != null ? pred.first : 0;
-                        if (c == v) {
-                            if (pred.second.area() > area) {
-                                count++;
-                                area = pred.second.area();
-                                if (count > 3) {
-                                    break;
-                                }
+                        char c = left.capture().predict();
+                        if (c == chr) {
+                            count++;
+                            if (count > 1) {
+                                break;
                             }
                         } else if (c != 0) {
                             count = 0;
                             cam = left;
-                            v = c;
-                            area = pred.second.area();
+                            chr = c;
                         }
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Error getting frame from left camera");
-                        left.close();
                         left = null;
-                    } catch (IllegalArgumentException e) {
-                        v = 0;
                     }
                 } else l = false;
                 if (right != null && right.isOpened()) {
                     try {
-                        pred = right.capture().predictWithShape();
-                        char c = pred != null ? pred.first : 0;
-                        if (c == v) {
-                            if (pred.second.area() > area) {
-                                count++;
-                                area = pred.second.area();
-                                if (count > 3) {
-                                    break;
-                                }
+                        char c = right.capture().predict();
+                        if (c == chr) {
+                            count++;
+                            if (count > 1) {
+                                break;
                             }
                         } else if (c != 0) {
                             count = 0;
-                            cam = left;
-                            v = c;
-                            area = pred.second.area();
+                            cam = right;
+                            chr = c;
                         }
                     } catch (IOException e) {
                         logger.log(Level.SEVERE, "Error getting frame from right camera");
-                        right.close();
                         right = null;
-                    } catch (IllegalArgumentException e) {
-                        v = 0;
                     }
                 } else r = false;
             }
-            if (v != 0) foundVictim = new Frame.Pair<>(Victim.valueOf("" + v), cam);
+            if (chr != 0) foundVictim = new Frame.Pair<>(Victim.valueOf("" + chr), cam);
+        }
+
+        public void stop() {
+            go = false;
         }
     };
 

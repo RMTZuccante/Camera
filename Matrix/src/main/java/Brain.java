@@ -1,5 +1,4 @@
 import camera.Camera;
-import camera.ModelLoader;
 import com.fazecast.jSerialComm.SerialPort;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -7,7 +6,6 @@ import com.google.gson.stream.JsonReader;
 import json.Values;
 import matrix.Matrix;
 import matrix.communication.SerialConnector;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -30,8 +28,6 @@ public class Brain {
         JsonObject config = null;
         Camera left = null, right = null;
 
-        String modelpath = "./model/model.dl4j";
-
         try {
             config = new JsonParser().parse(new JsonReader(new FileReader("config.json"))).getAsJsonObject();
         } catch (FileNotFoundException e) {
@@ -42,28 +38,15 @@ public class Brain {
         Values v = new Values(config);
         if (v.load()) {
             if (v.enbaleCameras && Camera.loadLib(v.libpath)) {
-                MultiLayerNetwork model = null;
-                try {
-                    model = ModelLoader.loadModel(modelpath);
-                    logger.info("Model imported");
-                } catch (ModelLoader.ModelLoaderException e) {
-                    logger.info("Error loading model " + e.getMessage());
-                    if (e.isCritic()) System.exit(-1);
-                }
+                left = new Camera(v.leftCameaId, v.minArea, v.maxAra, v.thresh, v.paddings, false);
+                if (!left.open()) {
+                    logger.log(Level.SEVERE, "Error opening left camera. index: " + v.leftCameaId);
+                } else logger.info("Left camera opened");
 
-                if (model != null) {
-                    left = new Camera(v.leftCameaId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, false);
-                    if (!left.open(v.leftCameaId)) {
-                        logger.log(Level.SEVERE, "Error opening left camera. index: " + v.leftCameaId);
-                    } else logger.info("Left camera opened");
-
-                    right = new Camera(v.rightCameraId, model, v.ref, v.minArea, v.maxAra, v.thresh, v.offset, v.precision, v.paddings, true);
-                    if (!right.open(v.rightCameraId)) {
-                        logger.log(Level.SEVERE, "Error opening right camera. index: " + v.rightCameraId);
-                    } else logger.info("Right camera opened");
-
-                    logger.info("Cameras loaded");
-                }
+                right = new Camera(v.rightCameraId,v.minArea, v.maxAra, v.thresh,v.paddings, true);
+                if (!right.open()) {
+                    logger.log(Level.SEVERE, "Error opening right camera. index: " + v.rightCameraId);
+                } else logger.info("Right camera opened");
             } else {
                 logger.log(Level.SEVERE, "Error loading lib, provided path may be wrong");
             }
